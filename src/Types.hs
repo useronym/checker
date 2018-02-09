@@ -3,13 +3,11 @@ module Types where
 
 
 -- The data type of formulae.
-type PropId = Char
 type VarId = Char
 type StateId = String
 
 data Form where
   Truth  ∷ Form
-  Prop   ∷ PropId → Form
   Not    ∷ Form → Form
   And    ∷ Form → Form → Form
   Future ∷ Form → Form
@@ -27,5 +25,4 @@ data Form where
 -- The data type of hybrid Kripke structures.
 data Model = Model {
     modelStates ∷ [StateId]
-  , modelTrans  ∷ (StateId → [StateId])
-  , modelValuation ∷ (StateId → [PropId]) }
+  , modelTrans  ∷ (StateId → [StateId]) }
