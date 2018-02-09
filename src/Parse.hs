@@ -1,19 +1,22 @@
 {-# LANGUAGE UnicodeSyntax #-}
 module Parse where
 
-import Prelude hiding (not, and)
-import Control.Category.Unicode
-import Control.Applicative hiding ((<|>))
-import Text.Parsec
-import Types
+import           Control.Applicative      hiding ((<|>))
+import           Control.Category.Unicode
+import           Prelude                  hiding (and, not)
+import           Text.Parsec
+import           Types
 
 
-form' ∷ Parsec String () Form
-form' = form >>= (\ ϕ → eof >> return ϕ)
+parseForm ∷ String → Either ParseError Form
+parseForm = parse (form <* eof) "formula" ∘ enclose "(" ")"
+  where enclose l r x = l ++ x ++ r
 
-form = do
-  spaces *> ((between (char '(') (char ')') forms) <|> truth <|> prop <|> not <|> future) <* spaces
-  where forms = choice $ map try [and]
+form = spaces *> ((between (char '(') (char ')') binaryForm) <|> unaryForm <|> constForm) <* spaces
+
+constForm = choice $ map try [truth, prop]
+unaryForm = choice $ map try [not, future]
+binaryForm = choice $ map try [and]
 
 truth = char '⊤' >> (return Truth)
 
