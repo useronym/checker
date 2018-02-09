@@ -14,10 +14,11 @@ parseForm = parse (form <* eof) "formula" ∘ enclose "(" ")"
 
 form = spaces *> ((between (char '(') (char ')') (binderForm <|> binaryForm)) <|> unaryForm <|> constForm) <* spaces
 
-constForm = choice $ map try [truth, nom, var]
-unaryForm = choice $ map try [not, future, past]
-binaryForm = choice $ map try [and, until, since]
-binderForm = choice $ map try [at, bind, exists]
+constForm = someOf [truth, nom, var]
+unaryForm = someOf [not, future, past]
+binaryForm = someOf [and, until, since]
+binderForm = someOf [at, bind, exists]
+someOf = choice ∘ map try
 
 truth = char '⊤' >> (return Truth)
 
