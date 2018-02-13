@@ -1,0 +1,8 @@
+states:
+- id: a
+  init: yes
+  next: [b, c]
+- id: b
+  next: [a, c]
+- id: c
+
