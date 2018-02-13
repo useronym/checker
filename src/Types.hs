@@ -41,9 +41,12 @@ data State = State {
   }
 
 instance Show State where
-  show State{..} = showInit ++ "[" ++ stateId ++ "] " ++ showNext
+  show State{..} = showInit ⧺ "[" ⧺ stateId ⧺ "] " ⧺ showNext ⧺ " " ⧺ showPrev
     where showInit   = if stateInit then "→" else " "
-          showNext   = "Next: " ⧺ (intercalate "," $ map getStateId stateNext)
+          showNext   = "Next: " ⧺ showStates stateNext
+          showPrev   = "Prev: " ⧺ showStates statePrev
+          showStates = enclose ∘ (intercalate ",") ∘ (map getStateId)
+          enclose x  = "[" ⧺ x ⧺ "]"
 
 -- Eh.
 getStateId = stateId
