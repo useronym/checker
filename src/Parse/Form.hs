@@ -1,5 +1,5 @@
 {-# LANGUAGE UnicodeSyntax #-}
-module Parse where
+module Parse.Form where
 
 import           Control.Applicative      hiding ((<|>))
 import           Control.Category.Unicode
