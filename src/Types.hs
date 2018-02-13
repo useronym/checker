@@ -41,12 +41,9 @@ data State = State {
   }
 
 instance Show State where
-  show State{..} = intercalate ": " [showId, showInit, showNext, showPrev]
-    where showId     = stateId
-          showInit   = "I: " ⧺ if stateInit then "✓" else "✗"
-          showNext   = "N: " ⧺ showStates stateNext
-          showPrev   = "P: " ⧺ showStates statePrev
-          showStates = (intercalate ",") ∘ (map getStateId)
+  show State{..} = showInit ++ "[" ++ stateId ++ "] " ++ showNext
+    where showInit   = if stateInit then "→" else " "
+          showNext   = "Next: " ⧺ (intercalate "," $ map getStateId stateNext)
 
 -- Eh.
 getStateId = stateId
@@ -58,21 +55,18 @@ instance Show Model where
   show (Model xs) = unlines $ map show xs
 
 
--- We also have structire which is parsed from file and later converted to the "real" thing.
+-- We also have structure which is parsed from file and later converted to the "real" thing.
 data ParsedState = ParsedState {
     parsedId   ∷ Maybe StateId -- ^ A unique identifier.
   , parsedInit ∷ Bool          -- ^ Initial?
   , parsedNext ∷ [StateId]     -- ^ List of directly reachable states.
-  , parsedPrev ∷ [StateId]     -- ^ List of direct predecesor states.
   } deriving (Show)
 
 instance FromJSON ParsedState where
   parseJSON (Object o) = ParsedState <$>
       o .: "id"
-    ⊛ (isJust <$> (o .:? "init" ∷ Parser (Maybe String)))
-    ⊛ o .: "next"
-    ⊛ o .: "prev"
-
+    ⊛ o .:? "init" .!= False
+    ⊛ o .:? "next" .!= []
 
 -- We allow specifying initial states both as a list and separately in each state.
 data ParsedModel = ParsedModel {
@@ -83,4 +77,4 @@ data ParsedModel = ParsedModel {
 instance FromJSON ParsedModel where
   parseJSON (Object o) = ParsedModel <$>
       o .: "states"
-    ⊛ o .: "initial"
+    ⊛ o .:? "initial" .!= []
