@@ -25,7 +25,9 @@ dependencies:
 - distributed-process-simplelocalnet
 - distributed-process-async
 - parsec
+- yaml
 - base-unicode-symbols
+- bytestring
 
 library:
   source-dirs: src

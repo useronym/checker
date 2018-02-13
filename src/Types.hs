@@ -1,5 +1,14 @@
-{-# LANGUAGE UnicodeSyntax, GADTs #-}
+{-# LANGUAGE GADTs           #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE UnicodeSyntax   #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Types where
+
+import           Control.Category.Unicode
+import           Control.Applicative.Unicode
+import           Data.List                (intercalate)
+import           Data.Maybe (isJust)
+import Data.Yaml
 
 
 -- The data type of formulae.
@@ -22,7 +31,55 @@ data Form where
     deriving (Show)
 
 
--- The data type of hybrid Kripke structures.
-data Model = Model {
-    modelStates ∷ [StateId]
-  , modelTrans  ∷ (StateId → [StateId]) }
+-- A state in a hybrid Kripke structure.
+data State = State {
+    stateId   ∷ StateId -- ^ A unique identifier.
+  , stateInit ∷ Bool    -- ^ Initial?
+  , stateNext ∷ [State] -- ^ List of directly reachable states.
+  , statePrev ∷ [State] -- ^ List of direct predecesor states.
+  }
+
+instance Show State where
+  show State{..} = intercalate ": " [showId, showInit, showNext, showPrev]
+    where showId     = stateId
+          showInit   = "I: " ++ if stateInit then "✓" else "✗"
+          showNext   = "N: " ++ showStates stateNext
+          showPrev   = "P: " ++ showStates statePrev
+          showStates = (intercalate ",") ∘ (map getStateId)
+
+-- Eh.
+getStateId = stateId
+
+-- The model, then, is a list of such states.
+newtype Model = Model [State]
+
+instance Show Model where
+  show (Model xs) = unlines $ map show xs
+
+
+-- We also have structire which is parsed from file and later converted to the "real" thing.
+data ParsedState = ParsedState {
+    parsedId   ∷ Maybe StateId -- ^ A unique identifier.
+  , parsedInit ∷ Bool          -- ^ Initial?
+  , parsedNext ∷ [StateId]     -- ^ List of directly reachable states.
+  , parsedPrev ∷ [StateId]     -- ^ List of direct predecesor states.
+  } deriving (Show)
+
+instance FromJSON ParsedState where
+  parseJSON (Object o) = ParsedState <$>
+      o .: "id"
+    ⊛ (isJust <$> (o .:? "init" ∷ Parser (Maybe String)))
+    ⊛ o .: "next"
+    ⊛ o .: "prev"
+
+
+-- We allow specifying initial states both as a list and separately in each state.
+data ParsedModel = ParsedModel {
+    parsedStates ∷ [ParsedState]
+  , parsedInits ∷ [StateId]
+  }
+
+instance FromJSON ParsedModel where
+  parseJSON (Object o) = ParsedModel <$>
+      o .: "states"
+    ⊛ o .: "initial"
