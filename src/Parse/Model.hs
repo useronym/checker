@@ -2,7 +2,7 @@
 module Parse.Model where
 
 import           Control.Applicative      hiding ((<|>))
-import           Control.Category.Unicode
+import           Data.Function.Unicode
 import           Data.ByteString          (readFile)
 import           Data.Yaml
 import           Prelude                  hiding (readFile)

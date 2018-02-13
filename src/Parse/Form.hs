@@ -2,7 +2,7 @@
 module Parse.Form where
 
 import           Control.Applicative      hiding ((<|>))
-import           Control.Category.Unicode
+import           Data.Function.Unicode
 import           Prelude                  hiding (and, not, until)
 import           Text.Parsec
 import           Types

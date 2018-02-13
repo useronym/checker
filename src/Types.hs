@@ -1,14 +1,15 @@
-{-# LANGUAGE GADTs           #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE UnicodeSyntax   #-}
+{-# LANGUAGE GADTs             #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE UnicodeSyntax     #-}
 module Types where
 
-import           Control.Category.Unicode
 import           Control.Applicative.Unicode
-import           Data.List                (intercalate)
-import           Data.Maybe (isJust)
-import Data.Yaml
+import           Data.Function.Unicode
+import           Data.List                   (intercalate)
+import           Data.List.Unicode           ((⧺))
+import           Data.Maybe                  (isJust)
+import           Data.Yaml
 
 
 -- The data type of formulae.
@@ -42,9 +43,9 @@ data State = State {
 instance Show State where
   show State{..} = intercalate ": " [showId, showInit, showNext, showPrev]
     where showId     = stateId
-          showInit   = "I: " ++ if stateInit then "✓" else "✗"
-          showNext   = "N: " ++ showStates stateNext
-          showPrev   = "P: " ++ showStates statePrev
+          showInit   = "I: " ⧺ if stateInit then "✓" else "✗"
+          showNext   = "N: " ⧺ showStates stateNext
+          showPrev   = "P: " ⧺ showStates statePrev
           showStates = (intercalate ",") ∘ (map getStateId)
 
 -- Eh.
@@ -76,7 +77,7 @@ instance FromJSON ParsedState where
 -- We allow specifying initial states both as a list and separately in each state.
 data ParsedModel = ParsedModel {
     parsedStates ∷ [ParsedState]
-  , parsedInits ∷ [StateId]
+  , parsedInits  ∷ [StateId]
   }
 
 instance FromJSON ParsedModel where
