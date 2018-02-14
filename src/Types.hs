@@ -1,15 +1,20 @@
+{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE GADTs             #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TupleSections     #-}
 {-# LANGUAGE UnicodeSyntax     #-}
 module Types where
 
 import           Control.Applicative.Unicode
+import           Data.Binary                 (Binary)
 import           Data.Function.Unicode
+import           Data.Hashable               (Hashable (..))
 import           Data.List                   (intercalate)
 import           Data.List.Unicode           ((⧺))
 import           Data.Maybe                  (isJust)
 import           Data.Yaml
+import           GHC.Generics                (Generic)
 
 
 -- The data type of formulae.
@@ -29,7 +34,10 @@ data Form where
   At     ∷ (Either StateId VarId) → Form → Form
   Bind   ∷ VarId → Form → Form
   Exists ∷ VarId → Form → Form
-    deriving (Show)
+    deriving (Show, Eq, Generic)
+
+instance Hashable Form
+instance Binary Form
 
 
 -- A state in a hybrid Kripke structure.
@@ -38,7 +46,7 @@ data State = State {
   , stateInit ∷ Bool    -- ^ Initial?
   , stateNext ∷ [State] -- ^ List of directly reachable states.
   , statePrev ∷ [State] -- ^ List of direct predecesor states.
-  }
+  } deriving (Generic)
 
 instance Show State where
   show State{..} = showInit ⧺ "[" ⧺ stateId ⧺ "] " ⧺ showNext ⧺ " " ⧺ showPrev
@@ -50,6 +58,16 @@ instance Show State where
 
 -- Eh.
 getStateId = stateId
+
+instance Eq State where
+  (==) a b = (stateId a) == (stateId b)
+
+instance Hashable State where
+  hashWithSalt s State{..} = hashWithSalt s stateId
+
+instance Binary State
+
+
 
 -- The model, then, is a list of such states.
 newtype Model = Model [State]
@@ -81,3 +99,4 @@ instance FromJSON ParsedModel where
   parseJSON (Object o) = ParsedModel <$>
       o .: "states"
     ⊛ o .:? "initial" .!= []
+

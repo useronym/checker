@@ -21,6 +21,10 @@ description:         Please see the README on Github at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
+- transformers
+- hashable
+- hashtables
+- binary
 - distributed-process
 - distributed-process-simplelocalnet
 - distributed-process-async
