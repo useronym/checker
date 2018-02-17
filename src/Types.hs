@@ -45,14 +45,18 @@ data State = State {
     stateId   ∷ StateId -- ^ A unique identifier.
   , stateInit ∷ Bool    -- ^ Initial?
   , stateNext ∷ [State] -- ^ List of directly reachable states.
-  , statePrev ∷ [State] -- ^ List of direct predecesor states.
+  , statePrev ∷ [State] -- ^ List of direct predecessor states.
+  , stateSucc ∷ [State] -- ^ List of all successor states. Finite.
+  , statePred ∷ [State] -- ^ List of all predecessor states. Finite.
   } deriving (Generic)
 
 instance Show State where
-  show State{..} = showInit ⧺ "[" ⧺ stateId ⧺ "] " ⧺ showNext ⧺ " " ⧺ showPrev
+  show State{..} = showInit ⧺ "[" ⧺ stateId ⧺ "] " ⧺ intercalate " " [showNext, showPrev, showSucc, showPred]
     where showInit   = if stateInit then "→" else " "
           showNext   = "Next: " ⧺ showStates stateNext
           showPrev   = "Prev: " ⧺ showStates statePrev
+          showSucc   = "Succ: " ⧺ showStates stateSucc
+          showPred   = "Pred: " ⧺ showStates statePred
           showStates = enclose ∘ (intercalate ",") ∘ (map getStateId)
           enclose x  = "[" ⧺ x ⧺ "]"
 

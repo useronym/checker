@@ -1,7 +1,7 @@
 states:
 - id: a
   init: yes
-  next: [b, c]
+  next: [a, b, c]
 - id: b
   next: [a, c]
 - id: c
