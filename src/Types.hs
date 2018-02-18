@@ -76,6 +76,9 @@ instance Binary State
 -- The model, then, is a list of such states.
 newtype Model = Model [State]
 
+unModel ∷ Model → [State]
+unModel (Model m) = m
+
 instance Show Model where
   show (Model xs) = unlines $ map show xs
 
