@@ -17,11 +17,11 @@ type Assignment = (State, Form, Bool)
 -- The model checking monad allows access to & modification of truth values of formulae in the model.
 -- Access is performed by a direct lookup in a hashtable assigned to this process.
 -- Modification implies sending the new update to all other model checking processes.
-type HashTable k v = H.BasicHashTable k v
+type HashTable = H.BasicHashTable (State, Form) Bool
 
 data ModelCheckState = ModelCheckState {
     checkPeers ∷ [ProcessId]
-  , checkState ∷ HashTable (State, Form) Bool
+  , checkState ∷ HashTable
   }
 
 type ModelCheck = StateT ModelCheckState Process
@@ -40,7 +40,7 @@ get ∷ State → Form → ModelCheck Bool
 get s ϕ = do
   x ← lookup s ϕ
   case x of
-    Just a → return a
+    Just a  → return a
     Nothing → do
       processInput
       get s ϕ
@@ -61,12 +61,11 @@ processRemainingInput = do
       processRemainingInput
     Nothing → return ()
 
+withTable ∷ (HashTable → IO α) → ModelCheck α
+withTable f = gets checkState >>= liftIO ∘ f
+
 lookup ∷ State → Form → ModelCheck (Maybe Bool)
-lookup s ϕ = do
-  t ← gets checkState
-  liftIO $ H.lookup t (s, ϕ)
+lookup s ϕ = withTable $ \t → H.lookup t (s, ϕ)
 
 insert ∷ Assignment → ModelCheck ()
-insert (s, ϕ, v) = do
-  t ← gets checkState
-  liftIO $ H.insert t (s, ϕ) v
+insert (s, ϕ, v) = withTable $ \t → H.insert t (s, ϕ) v
