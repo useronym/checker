@@ -13,7 +13,7 @@ predecessors = reachableWith statePrev
 
 -- Uses DFS; breaks the cycles.
 reachableWith ∷ (State → [State]) → State → [State]
-reachableWith f = reverse ∘ (reachableWith' f [])
+reachableWith f = reverse ∘ reachableWith' f []
 
 reachableWith' ∷ (State → [State]) → [State] → State → [State]
 reachableWith' f collected x = foldl go collected (f x)

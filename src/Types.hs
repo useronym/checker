@@ -46,8 +46,8 @@ data State = State {
   , stateInit ∷ Bool    -- ^ Initial?
   , stateNext ∷ [State] -- ^ List of directly reachable states.
   , statePrev ∷ [State] -- ^ List of direct predecessor states.
-  , stateSucc ∷ [State] -- ^ List of all successor states. Finite.
-  , statePred ∷ [State] -- ^ List of all predecessor states. Finite.
+  , stateSucc ∷ [State] -- ^ List of all reachable states. Finite.
+  , statePred ∷ [State] -- ^ List of all states this state can be reached from. Finite.
   } deriving (Generic)
 
 instance Show State where

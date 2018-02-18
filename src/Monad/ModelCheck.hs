@@ -26,17 +26,22 @@ data ModelCheckState = ModelCheckState {
 
 type ModelCheck = StateT ModelCheckState Process
 
+-- Put a single assignment into the store.
 put ∷ Assignment → ModelCheck ()
 put a = putMany [a]
 
+-- Or, put many.
 putMany ∷ [Assignment] → ModelCheck ()
 putMany as = do
   broadcastMany as
   insertMany as
 
+-- Broadcast the new assgiments to all the other model-checking processes.
 broadcastMany ∷ [Assignment] → ModelCheck ()
 broadcastMany a = withPeers $ mapM_ (`send` a)
 
+-- Blockingly performs lookup in the assignment store. If the assignment we're looking for is not present,
+-- we keep processing incoming assignments from other processes until it arrives.
 get ∷ State → Form → ModelCheck Bool
 get s ϕ = do
   x ← lookup s ϕ
@@ -46,6 +51,8 @@ get s ϕ = do
       processInput
       get s ϕ
 
+-- To process input, we first block until at least one input is available.
+-- Then we process all the remaining input in the inbox.
 processInput = processOneInput >> processRemainingInput
 
 processOneInput ∷ ModelCheck ()
@@ -62,12 +69,14 @@ processRemainingInput = do
       processRemainingInput
     Nothing → return ()
 
+-- Convenience wrappers.
 withPeers ∷ ([ProcessId] → Process ()) → ModelCheck ()
 withPeers f = gets checkPeers >>= lift ∘ f
 
 withTable ∷ (HashTable → IO α) → ModelCheck α
 withTable f = gets checkState >>= liftIO ∘ f
 
+-- Direct operations on the assignment store.
 lookup ∷ State → Form → ModelCheck (Maybe Bool)
 lookup s ϕ = withTable $ \t → H.lookup t (s, ϕ)
 
