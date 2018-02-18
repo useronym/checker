@@ -33,8 +33,8 @@ build ParsedModel{..} =
           , stateInit = parsedInit
           , stateNext = map (\st → fromJust $ find ((≡ st) ∘ getStateId) model) parsedNext
           , statePrev = filter (isJust ∘ find ((≡ thisId) ∘ stateId) ∘ stateNext) model
-          , stateSucc = []
-          , statePred = []
+          , stateSucc = error "uninitialized field"
+          , statePred = error "uninitialized field"
           }
 
 -- Ensure uniqueness of state ids, that state ids referenced exists,
