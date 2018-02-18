@@ -27,14 +27,15 @@ data ModelCheckState = ModelCheckState {
 type ModelCheck = StateT ModelCheckState Process
 
 put ∷ Assignment → ModelCheck ()
-put a = do
-  broadcast a
-  insert a
+put a = putMany [a]
 
-broadcast ∷ Assignment → ModelCheck ()
-broadcast a = do
-  ps ← gets checkPeers
-  lift $ mapM_ (`send` a) ps
+putMany ∷ [Assignment] → ModelCheck ()
+putMany as = do
+  broadcastMany as
+  insertMany as
+
+broadcastMany ∷ [Assignment] → ModelCheck ()
+broadcastMany a = withPeers $ mapM_ (`send` a)
 
 get ∷ State → Form → ModelCheck Bool
 get s ϕ = do
@@ -50,16 +51,19 @@ processInput = processOneInput >> processRemainingInput
 processOneInput ∷ ModelCheck ()
 processOneInput = do
   a ← lift $ expect
-  insert a
+  insertMany a
 
 processRemainingInput ∷ ModelCheck ()
 processRemainingInput = do
   a ← lift $ expectTimeout 0
   case a of
     Just a' → do
-      insert a'
+      insertMany a'
       processRemainingInput
     Nothing → return ()
+
+withPeers ∷ ([ProcessId] → Process ()) → ModelCheck ()
+withPeers f = gets checkPeers >>= lift ∘ f
 
 withTable ∷ (HashTable → IO α) → ModelCheck α
 withTable f = gets checkState >>= liftIO ∘ f
@@ -69,3 +73,6 @@ lookup s ϕ = withTable $ \t → H.lookup t (s, ϕ)
 
 insert ∷ Assignment → ModelCheck ()
 insert (s, ϕ, v) = withTable $ \t → H.insert t (s, ϕ) v
+
+insertMany ∷ [Assignment] → ModelCheck ()
+insertMany = mapM_ insert
