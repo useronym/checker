@@ -51,6 +51,12 @@ get s ϕ = do
       processInput
       get s ϕ
 
+-- Processes all the incoming assignments and then attemps a lookup.
+getMaybe ∷ State → Form → ModelCheck (Maybe Bool)
+getMaybe s ϕ = do
+  processRemainingInput
+  lookup s ϕ
+
 -- To process input, we first block until at least one input is available.
 -- Then we process all the remaining input in the inbox.
 processInput = processOneInput >> processRemainingInput
