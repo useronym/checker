@@ -31,7 +31,7 @@ build ParsedModel{..} =
   where buildState model ParsedState{..} = let thisId = fromJust parsedId in State {
             stateId   = thisId
           , stateInit = parsedInit
-          , stateNext = map (\st → fromJust $ find ((≡ st) ∘ getStateId) model) parsedNext
+          , stateNext = map (getStateById (Model model)) parsedNext
           , statePrev = filter (isJust ∘ find ((≡ thisId) ∘ stateId) ∘ stateNext) model
           , stateSucc = error "uninitialized field"
           , statePred = error "uninitialized field"
