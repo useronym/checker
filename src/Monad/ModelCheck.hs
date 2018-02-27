@@ -26,9 +26,9 @@ data ModelCheckState = ModelCheckState {
 
 type ModelCheck = StateT ModelCheckState Process
 
--- Put a single assignment into the store.
-put ∷ Assignment → ModelCheck ()
-put a = putMany [a]
+-- Put a single assignment into the store. Returns the inserted value
+put ∷ Assignment → ModelCheck Bool
+put a@(_, _, v) = putMany [a] >> return v
 
 -- Or, put many.
 putMany ∷ [Assignment] → ModelCheck ()
