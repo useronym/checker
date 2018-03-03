@@ -1,4 +1,3 @@
-{-# LANGUAGE UnicodeSyntax #-}
 module Monad.ModelCheck where
 
 import           Control.Distributed.Process

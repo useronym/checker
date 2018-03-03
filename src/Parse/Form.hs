@@ -1,4 +1,3 @@
-{-# LANGUAGE UnicodeSyntax #-}
 module Parse.Form where
 
 import           Control.Applicative      hiding ((<|>))

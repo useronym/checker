@@ -1,4 +1,3 @@
-{-# LANGUAGE UnicodeSyntax #-}
 module Semantics where
 
 import           Data.Function.Unicode

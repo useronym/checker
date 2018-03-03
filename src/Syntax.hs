@@ -1,4 +1,3 @@
-{-# LANGUAGE UnicodeSyntax #-}
 module Syntax where
 
 import           Data.List.Unicode ((⧺))

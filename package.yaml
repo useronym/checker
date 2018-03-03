@@ -34,6 +34,9 @@ dependencies:
 - base-unicode-symbols
 - bytestring
 
+default-extensions:
+- UnicodeSyntax
+
 library:
   source-dirs: src
 

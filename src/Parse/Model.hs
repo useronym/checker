@@ -1,5 +1,4 @@
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE UnicodeSyntax   #-}
 module Parse.Model where
 
 import           Control.Applicative   hiding ((<|>))
