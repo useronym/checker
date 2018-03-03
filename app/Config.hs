@@ -1,57 +1,48 @@
 {-# LANGUAGE RecordWildCards #-}
 module Config where
 
+import           Control.Monad         (sequence)
+import           Data.Bitraversable    (bisequence)
+import           Data.Function.Unicode
 import           Options
 import           Parse
 import           Types
 
 
 data MasterConfig = MasterConfig
-  { peers ∷ [String]
-  , model ∷ Model
-  , form  ∷ Form
+  { peers      ∷ [String]
+  , masterPort ∷ Int
+  , model      ∷ Model
+  , form       ∷ Form
   }
 
 data SlaveConfig = SlaveConfig
-  {
+  { slavePort ∷ Int
   }
 
-type EitherConfig = Either MasterConfig SlaveConfig
+type Config = Either MasterConfig SlaveConfig
 
-data Config = Config
-  { port       ∷ Int
-  , modeConfig ∷ EitherConfig
-  }
 
 loadConfig ∷ Options → IO Config
-loadConfig (Options shared options) = do
-  s ← loadConfigShared shared
-  o ← loadConfigEither options
-  return $ s { modeConfig = o }
+loadConfig = bisequence ∘ either (Left ∘ loadConfigMaster) (Right ∘ loadConfigSlave)
 
-loadConfigShared ∷ SharedOptions → IO Config
-loadConfigShared SharedOptions{..} = return $ Config
-  { port = port
-  , modeConfig = error "Uninitialized" }
-
-loadConfigEither ∷ EitherOptions → IO EitherConfig
-loadConfigEither (Master options) = loadConfigMaster options
-loadConfigEither (Slave options)  = loadConfigSlave options
-
-loadConfigMaster ∷ MasterOptions → IO EitherConfig
+loadConfigMaster ∷ MasterOptions → IO MasterConfig
 loadConfigMaster MasterOptions{..} = do
   m ← loadModel modelPath
   p ← loadPeers peersPath
-  return $ Left $ MasterConfig
+  return $ MasterConfig
     { peers = p
+    , masterPort = masterPort
     , model = fromRight m
     , form = fromRight $ parseForm form
     }
-  where fromRight (Left e) = error (show e)
+  where fromRight (Left e)  = error (show e)
         fromRight (Right r) = r
-
-loadConfigSlave ∷ SlaveOptions → IO EitherConfig
-loadConfigSlave SlaveOptions = return $ Right $ SlaveConfig
 
 loadPeers ∷ FilePath → IO [undefined]
 loadPeers path = undefined
+
+loadConfigSlave ∷ SlaveOptions → IO SlaveConfig
+loadConfigSlave SlaveOptions{..} = return $ SlaveConfig
+  { slavePort = slavePort
+  }
