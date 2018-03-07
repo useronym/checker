@@ -6,13 +6,13 @@ import           Options.Applicative
 
 data MasterOptions = MasterOptions
   { peersPath  ∷ FilePath
-  , masterPort ∷ Int
+  , masterPort ∷ String
   , modelPath  ∷ FilePath
   , form       ∷ String
   }
 
 data SlaveOptions = SlaveOptions
-  { slavePort ∷ Int
+  { slavePort ∷ String
   }
 
 type Options = Either MasterOptions SlaveOptions
@@ -28,10 +28,10 @@ masterOptionsParser =
       ( long "peers"
      <> help "Path to a file with a list of IP addresses, separated by newline."
      <> value "peers")
-  <*> option auto
+  <*> strOption
       ( long "port"
      <> short 'p'
-     <> value 9000
+     <> value "9000"
      <> help "Port to use for communication between the nodes.")
   <*> strOption
       ( long "model"
@@ -43,10 +43,10 @@ masterOptionsParser =
 slaveOptionsParser ∷ Parser SlaveOptions
 slaveOptionsParser =
   SlaveOptions
-  <$> option auto
+  <$> strOption
       ( long "port"
      <> short 'p'
-     <> value 9000
+     <> value "9000"
      <> help "Port to use for communication between the nodes.")
 
 
