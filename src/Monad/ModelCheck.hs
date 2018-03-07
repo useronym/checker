@@ -25,6 +25,7 @@ data ModelCheckState = ModelCheckState {
 
 type ModelCheck = StateT ModelCheckState Process
 
+
 -- Put a single assignment into the store. Returns the inserted value.
 put ∷ Assignment → ModelCheck Bool
 put a@(_, _, v) = putMany [a] >> return v
@@ -90,3 +91,15 @@ insert (s, ϕ, v) = withStore $ write (s, ϕ) v
 
 insertMany ∷ [Assignment] → ModelCheck ()
 insertMany as = withStore $ writeMany (map (\(a,b,c) → ((a,b),c)) as)
+
+size ∷ ModelCheck Int
+size = withStore Monad.Types.size
+
+-- Convenience functions for beginning the computation.
+evalModelCheck ∷ ModelCheck a → ModelCheckState → Process a
+evalModelCheck = evalStateT
+
+newModelCheckState ∷ [ProcessId] → Process ModelCheckState
+newModelCheckState ps = do
+  s ← liftIO new
+  return ModelCheckState{checkPeers = ps, checkStore = s}

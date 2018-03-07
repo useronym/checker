@@ -1,13 +1,17 @@
 {-# LANGUAGE RecordWildCards #-}
 module Master (spawnMaster) where
 
-import           Control.Distributed.Process
 import           Config
-import           Control.Monad                                      (forM)
+import           Control.Distributed.Process
+import           Control.Monad               (forM)
+import           Control.Monad.Extra         (ifM)
+import           Control.Monad.Trans.Class   (lift)
 import           Data.Function.Unicode
-import           Slave
-import           Types
 import           List
+import           Monad.ModelCheck
+import           Slave
+import           Syntax
+import           Types
 
 
 spawnMaster ∷ MasterConfig → [NodeId] → Process ()
@@ -17,10 +21,20 @@ spawnMaster MasterConfig{model = m@PolyModel{..}, form = ϕ} slaves = do
   pids ← distribute (spawnSlave m ϕ)
   self ← getSelfPid
   mapM (`send` (self:pids)) pids
-  await pids
-  where distribute = let ss        = map polyId polyStates
-                         workloads = partitionN (length slaves) ss
-                     in forM (zip workloads slaves) ∘ uncurry
+  runAwait pids ϕ
+    where distribute = let ss        = map polyId polyStates
+                           workloads = partitionN (length slaves) ss
+                       in forM (zip workloads slaves) ∘ uncurry
 
-await ∷ [ProcessId] → Process ()
-await pids = undefined
+
+runAwait ∷ [ProcessId] → Form → Process ()
+runAwait pids ϕ = newModelCheckState pids >>= evalModelCheck (await ϕ)
+
+await ∷ Form → ModelCheck ()
+await ϕ = do
+  let count = length (subformulae ϕ)
+  untilM (size >>= \s → do
+             lift $ say $ "Progress: " ++ show s ++ "/" ++ show count
+             return $ s < count)
+    processInput
+    where untilM p a = ifM p a (return ())
