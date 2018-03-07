@@ -16,17 +16,11 @@ import           Types
 parse ∷ FilePath → IO (Either ParseException ValidatedModel)
 parse path = readFile path >>= return ∘ fmap validate ∘ decodeEither'
 
-build ∷ ValidatedModel → Model
-build = reachability ∘ build'
-
-reachability ∷ Model → Model
-reachability (Model m) = Model $ map (\s → s{stateSucc = successors s, statePred = predecessors s}) m
-
 -- Tie it all up.
-build' ∷ ValidatedModel → Model
-build' PolyModel{..} =
+build ∷ ValidatedModel → Model
+build PolyModel{..} =
   let res = map (buildState res) polyStates in
-    Model res
+    reachability $ Model res
   where buildState model PolyState{..} = State {
             stateId   = polyId
           , stateInit = polyInit
@@ -36,7 +30,14 @@ build' PolyModel{..} =
           , statePred = error "uninitialized field"
           }
 
+reachability ∷ Model → Model
+reachability (Model m) = Model $ map (\s → s{stateSucc = successors s, statePred = predecessors s}) m
+
+-- TODO
 -- Ensure uniqueness of state ids, that state ids referenced exists,
 -- and move initialness of a state from the global list to specific states.
 validate ∷ ParsedModel → ValidatedModel
-validate = undefined
+validate PolyModel{..} = PolyModel
+  { polyStates = map (\p@PolyState{..} → p{ polyId = fromJust polyId }) polyStates
+  , polyInits = []
+  }

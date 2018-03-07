@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TupleSections   #-}
-module ModelCheck.Simple (run) where
+module ModelCheck.Simple where
 
 import           Control.Monad         (liftM2)
 import           Control.Monad.Extra   (ifM)

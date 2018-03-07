@@ -1,6 +1,6 @@
 module List where
 
-import Data.List (partition)
+import           Data.List (partition)
 
 
 partitionN ∷ Int → [a] → [[a]]
