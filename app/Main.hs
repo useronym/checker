@@ -2,20 +2,28 @@
 module Main where
 
 import           Config
-import qualified ModelCheck.Simple
-import           Options (parser)
-import           Options.Applicative (execParser)
+import           Control.Distributed.Process
+import           Control.Distributed.Process.Backend.SimpleLocalnet
+import           Control.Distributed.Process.Node                   (initRemoteTable)
+import           Master
+import           Options                                            (parser)
+import           Options.Applicative                                (execParser)
 
 
-main :: IO ()
+main ∷ IO ()
 main = execParser parser >>= loadConfig >>= run
 
 run ∷ Config → IO ()
-run (Left c) = runMaster c
-run (Right c) = runSlave c
+run = either runMaster runSlave
 
 runMaster ∷ MasterConfig → IO ()
-runMaster MasterConfig{..} = undefined
+runMaster c@MasterConfig{..} = do
+  backend <- initializeBackend "127.0.0.1" masterPort initRemoteTable
+  startMaster backend (spawnMaster c)
 
 runSlave ∷ SlaveConfig → IO ()
-runSlave SlaveConfig{..} = undefined
+runSlave SlaveConfig{..} = do
+  backend <- initializeBackend "127.0.0.1" slavePort initRemoteTable
+  startSlave backend
+
+

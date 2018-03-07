@@ -1,7 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 module Config where
 
-import           Control.Monad         (sequence)
 import           Data.Bitraversable    (bisequence)
 import           Data.Function.Unicode
 import           Options
