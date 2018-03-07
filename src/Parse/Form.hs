@@ -1,4 +1,4 @@
-module Parse.Form where
+module Parse.Form (Parse.Form.parse) where
 
 import           Control.Applicative      hiding ((<|>))
 import           Data.Function.Unicode
@@ -7,8 +7,8 @@ import           Text.Parsec
 import           Types
 
 
-parseForm ∷ String → Either ParseError Form
-parseForm = parse (form <* eof) "formula" ∘ enclose "(" ")"
+parse ∷ String → Either ParseError Form
+parse = Text.Parsec.parse (form <* eof) "formula" ∘ enclose "(" ")"
   where enclose l r x = l ++ x ++ r
 
 form =

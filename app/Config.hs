@@ -5,19 +5,19 @@ import           Control.Monad         (sequence)
 import           Data.Bitraversable    (bisequence)
 import           Data.Function.Unicode
 import           Options
-import           Parse
+import qualified Parse.Form            as F
+import qualified Parse.Model           as M
 import           Types
 
 
 data MasterConfig = MasterConfig
-  { peers      ∷ [String]
-  , masterPort ∷ Int
-  , model      ∷ Model
+  { masterPort ∷ String
+  , model      ∷ ValidatedModel
   , form       ∷ Form
   }
 
 data SlaveConfig = SlaveConfig
-  { slavePort ∷ Int
+  { slavePort ∷ String
   }
 
 type Config = Either MasterConfig SlaveConfig
@@ -28,19 +28,14 @@ loadConfig = bisequence ∘ either (Left ∘ loadConfigMaster) (Right ∘ loadCo
 
 loadConfigMaster ∷ MasterOptions → IO MasterConfig
 loadConfigMaster MasterOptions{..} = do
-  m ← loadModel modelPath
-  p ← loadPeers peersPath
+  m ← M.parse modelPath
   return $ MasterConfig
-    { peers = p
-    , masterPort = masterPort
+    { masterPort = masterPort
     , model = fromRight m
-    , form = fromRight $ parseForm form
+    , form = fromRight $ F.parse form
     }
   where fromRight (Left e)  = error (show e)
         fromRight (Right r) = r
-
-loadPeers ∷ FilePath → IO [undefined]
-loadPeers path = undefined
 
 loadConfigSlave ∷ SlaveOptions → IO SlaveConfig
 loadConfigSlave SlaveOptions{..} = return $ SlaveConfig

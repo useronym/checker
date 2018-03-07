@@ -6,14 +6,15 @@
 module Types where
 
 import           Control.Applicative.Unicode
-import           Data.Binary                 (Binary)
+import           Control.Distributed.Process.Serializable
+import           Data.Binary                              (Binary)
 import           Data.Function.Unicode
-import           Data.Hashable               (Hashable (..))
-import           Data.List                   (intercalate)
-import           Data.List.Unicode           ((⧺))
-import           Data.Maybe                  (isJust)
+import           Data.Hashable                            (Hashable (..))
+import           Data.List                                (intercalate)
+import           Data.List.Unicode                        ((⧺))
+import           Data.Maybe                               (isJust)
 import           Data.Yaml
-import           GHC.Generics                (Generic)
+import           GHC.Generics                             (Generic)
 
 
 -- The data type of formulae.
@@ -37,6 +38,7 @@ data Form where
 
 instance Hashable Form
 instance Binary Form
+instance Serializable Form
 
 
 -- A state in a hybrid Kripke structure.
@@ -83,26 +85,37 @@ instance Show Model where
 
 
 -- We also have structure which is parsed from file and later converted to the "real" thing.
-data ParsedState = ParsedState {
-    parsedId   ∷ Maybe StateId -- ^ A unique identifier.
-  , parsedInit ∷ Bool          -- ^ Initial?
-  , parsedNext ∷ [StateId]     -- ^ List of directly reachable states.
-  } deriving (Show)
+data PolyState a = PolyState {
+    polyId   ∷ a             -- ^ Identifier.
+  , polyInit ∷ Bool          -- ^ Initial?
+  , polyNext ∷ [StateId]     -- ^ List of directly reachable states.
+  } deriving (Show, Generic)
 
-instance FromJSON ParsedState where
-  parseJSON (Object o) = ParsedState <$>
+instance FromJSON a => FromJSON (PolyState a) where
+  parseJSON (Object o) = PolyState <$>
       o .: "id"
     ⊛ o .:? "init" .!= False
     ⊛ o .:? "next" .!= []
 
--- We allow specifying initial states both as a list and separately in each state.
-data ParsedModel = ParsedModel {
-    parsedStates ∷ [ParsedState]
-  , parsedInits  ∷ [StateId]
-  }
+instance Binary a => Binary (PolyState a)
+instance Serializable a => Serializable (PolyState a)
 
-instance FromJSON ParsedModel where
-  parseJSON (Object o) = ParsedModel <$>
+type ParsedState = PolyState (Maybe StateId)
+type ValidatedState = PolyState StateId
+
+-- We allow specifying initial states both as a list and separately in each state.
+data PolyModel a = PolyModel {
+    polyStates ∷ [PolyState a]
+  , polyInits  ∷ [StateId]
+  } deriving (Generic)
+
+instance FromJSON a => FromJSON (PolyModel a) where
+  parseJSON (Object o) = PolyModel <$>
       o .: "states"
     ⊛ o .:? "initial" .!= []
 
+instance Binary a => Binary (PolyModel a)
+instance Serializable a => Serializable (PolyModel a)
+
+type ParsedModel = PolyModel (Maybe StateId)
+type ValidatedModel = PolyModel StateId

@@ -1,5 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
-module Parse.Model where
+module Parse.Model (parse, build) where
 
 import           Control.Applicative   hiding ((<|>))
 import           Data.ByteString       (readFile)
@@ -13,30 +13,30 @@ import           Semantics
 import           Types
 
 
-loadModel ∷ FilePath → IO (Either ParseException Model)
-loadModel path = readFile path >>= return ∘ (fmap load) ∘ decodeEither'
+parse ∷ FilePath → IO (Either ParseException ValidatedModel)
+parse path = readFile path >>= return ∘ fmap validate ∘ decodeEither'
 
-load ∷ ParsedModel → Model
-load = reachability ∘ build ∘ validate
+build ∷ ValidatedModel → Model
+build = reachability ∘ build'
 
 reachability ∷ Model → Model
 reachability (Model m) = Model $ map (\s → s{stateSucc = successors s, statePred = predecessors s}) m
 
 -- Tie it all up.
-build ∷ ParsedModel → Model
-build ParsedModel{..} =
-  let res = map (buildState res) parsedStates in
+build' ∷ ValidatedModel → Model
+build' PolyModel{..} =
+  let res = map (buildState res) polyStates in
     Model res
-  where buildState model ParsedState{..} = let thisId = fromJust parsedId in State {
-            stateId   = thisId
-          , stateInit = parsedInit
-          , stateNext = map (getStateById (Model model)) parsedNext
-          , statePrev = filter (isJust ∘ find ((≡ thisId) ∘ stateId) ∘ stateNext) model
+  where buildState model PolyState{..} = State {
+            stateId   = polyId
+          , stateInit = polyInit
+          , stateNext = map (getStateById (Model model)) polyNext
+          , statePrev = filter (isJust ∘ find ((≡ polyId) ∘ stateId) ∘ stateNext) model
           , stateSucc = error "uninitialized field"
           , statePred = error "uninitialized field"
           }
 
 -- Ensure uniqueness of state ids, that state ids referenced exists,
 -- and move initialness of a state from the global list to specific states.
-validate ∷ ParsedModel → ParsedModel
-validate = id
+validate ∷ ParsedModel → ValidatedModel
+validate = undefined
