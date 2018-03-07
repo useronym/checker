@@ -34,7 +34,7 @@ data Form where
   At     ∷ (Either StateId VarId) → Form → Form
   Bind   ∷ VarId → Form → Form
   Exists ∷ VarId → Form → Form
-    deriving (Show, Eq, Generic)
+    deriving (Show, Eq, Ord, Generic)
 
 instance Hashable Form
 instance Binary Form
@@ -66,6 +66,9 @@ getStateId = stateId
 
 instance Eq State where
   (==) a b = (stateId a) == (stateId b)
+
+instance Ord State where
+  (<=) a b = (stateId a) <= (stateId b)
 
 instance Hashable State where
   hashWithSalt s State{..} = hashWithSalt s stateId

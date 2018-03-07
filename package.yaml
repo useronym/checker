@@ -25,11 +25,10 @@ dependencies:
 - extra
 - optparse-applicative
 - hashable
-- hashtables
+- hashmap
 - binary
 - distributed-process
 - distributed-process-simplelocalnet
-- distributed-process-async
 - parsec
 - yaml
 - base-unicode-symbols

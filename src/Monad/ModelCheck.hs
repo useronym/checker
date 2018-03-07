@@ -4,9 +4,9 @@ import           Control.Distributed.Process
 import           Control.Monad.Trans.Class   (lift)
 import           Control.Monad.Trans.State   hiding (State, get, put)
 import           Data.Function.Unicode
-import qualified Data.HashTable.IO           as H
 import           Data.Maybe                  (fromJust)
-import           Prelude                     hiding (lookup)
+import           Monad.Types
+import           Prelude                     hiding (lookup, read)
 import           Types
 
 
@@ -14,18 +14,18 @@ import           Types
 type Assignment = (State, Form, Bool)
 
 -- The model checking monad allows access to & modification of truth values of formulae in the model.
--- Access is performed by a direct lookup in a hashtable assigned to this process.
--- Modification implies sending the new update to all other model checking processes.
-type HashTable = H.BasicHashTable (State, Form) Bool
+-- Access is performed by a direct lookup in a shared state that resides on the current node.
+-- Modification implies sending the new update to all nodes, including the current one.
+type Store = IORefHashMap (State, Form) Bool
 
 data ModelCheckState = ModelCheckState {
     checkPeers ∷ [ProcessId]
-  , checkState ∷ HashTable
+  , checkStore ∷ Store
   }
 
 type ModelCheck = StateT ModelCheckState Process
 
--- Put a single assignment into the store. Returns the inserted value
+-- Put a single assignment into the store. Returns the inserted value.
 put ∷ Assignment → ModelCheck Bool
 put a@(_, _, v) = putMany [a] >> return v
 
@@ -35,7 +35,7 @@ putMany as = do
   broadcastMany as
   insertMany as
 
--- Broadcast the new assgiments to all the other model-checking processes.
+-- Broadcast the new assgiments to all the peers.
 broadcastMany ∷ [Assignment] → ModelCheck ()
 broadcastMany a = withPeers $ mapM_ (`send` a)
 
@@ -78,15 +78,15 @@ processRemainingInput = do
 withPeers ∷ ([ProcessId] → Process ()) → ModelCheck ()
 withPeers f = gets checkPeers >>= lift ∘ f
 
-withTable ∷ (HashTable → IO α) → ModelCheck α
-withTable f = gets checkState >>= liftIO ∘ f
+withStore ∷ (Store → IO α) → ModelCheck α
+withStore f = gets checkStore >>= liftIO ∘ f
 
 -- Direct operations on the assignment store.
 lookup ∷ State → Form → ModelCheck (Maybe Bool)
-lookup s ϕ = withTable $ \t → H.lookup t (s, ϕ)
+lookup s ϕ = withStore $ read (s, ϕ)
 
 insert ∷ Assignment → ModelCheck ()
-insert (s, ϕ, v) = withTable $ \t → H.insert t (s, ϕ) v
+insert (s, ϕ, v) = withStore $ write (s, ϕ) v
 
 insertMany ∷ [Assignment] → ModelCheck ()
-insertMany = mapM_ insert
+insertMany as = withStore $ writeMany (map (\(a,b,c) → ((a,b),c)) as)
