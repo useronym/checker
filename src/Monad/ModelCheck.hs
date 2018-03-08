@@ -99,7 +99,23 @@ size = withStore Monad.Types.size
 evalModelCheck ∷ ModelCheck a → ModelCheckState → Process a
 evalModelCheck = evalStateT
 
+evalModelCheck_ ∷ ModelCheck a → ModelCheckState → Process ()
+evalModelCheck_ a s = evalModelCheck a s >> return ()
+
+execModelCheck ∷ ModelCheck a → ModelCheckState → Process ModelCheckState
+execModelCheck = execStateT
+
 newModelCheckState ∷ [ProcessId] → Process ModelCheckState
 newModelCheckState ps = do
   s ← liftIO new
   return ModelCheckState{checkPeers = ps, checkStore = s}
+
+-- Convenience functions for waiting for the computation to finish.
+untilM ∷ Monad m ⇒ m Bool → m () → m ()
+untilM p a = p >>= \p' → if p'
+                           then return ()
+                           else a >> untilM p a
+
+-- Repeatedly executes the action until there are `count` entries in the state.
+untilFinished ∷ Int → ModelCheck () → ModelCheck ()
+untilFinished count a = untilM (Monad.ModelCheck.size >>= \s → return $ s < count) a
