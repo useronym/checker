@@ -37,4 +37,4 @@ await ϕ = do
              lift $ say $ "Progress: " ++ show s ++ "/" ++ show count
              return $ s < count)
     processInput
-    where untilM p a = ifM p a (return ())
+    where untilM p a = ifM p (return ()) (a >> untilM p a)
