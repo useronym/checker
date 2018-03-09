@@ -8,6 +8,7 @@ import           Control.Distributed.Process.Node                   (initRemoteT
 import           Master
 import           Options                                            (parser)
 import           Options.Applicative                                (execParser)
+import           Slave                                              (__remoteTable)
 
 
 main ∷ IO ()
@@ -18,12 +19,12 @@ run = either runMaster runSlave
 
 runMaster ∷ MasterConfig → IO ()
 runMaster c@MasterConfig{..} = do
-  backend <- initializeBackend "127.0.0.1" masterPort initRemoteTable
+  backend <- initializeBackend "127.0.0.1" masterPort (__remoteTable initRemoteTable)
   startMaster backend (spawnMaster c)
 
 runSlave ∷ SlaveConfig → IO ()
 runSlave SlaveConfig{..} = do
-  backend <- initializeBackend "127.0.0.1" slavePort initRemoteTable
+  backend <- initializeBackend "127.0.0.1" slavePort (__remoteTable initRemoteTable)
   startSlave backend
 
 

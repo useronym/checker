@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Slave (spawnSlave, stateServer) where
+module Slave (spawnSlave, stateServer, __remoteTable) where
 
 import           Control.Distributed.Process
 import           Control.Distributed.Process.Closure
