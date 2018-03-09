@@ -13,7 +13,7 @@ import           Types
 
 -- Simple top-down, inductive approach.
 check ∷ Model → State → Form → M.ModelCheck Bool
-check m s@State{..} ϕ = M.getMaybe s ϕ >>= maybe (check' >>= M.put ∘ (s, ϕ, )) return
+check m s@State{..} ϕ = M.lookup s ϕ >>= maybe (check' >>= M.put ∘ (s, ϕ, )) return
   where
     check' ∷ M.ModelCheck Bool
     check' = case ϕ of

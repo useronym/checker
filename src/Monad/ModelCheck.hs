@@ -1,6 +1,9 @@
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TupleSections   #-}
 module Monad.ModelCheck where
 
 import           Control.Distributed.Process
+import           Control.Monad.Extra         (mapMaybeM)
 import           Control.Monad.Trans.Class   (lift)
 import           Control.Monad.Trans.State   hiding (State, get, put)
 import           Data.Function.Unicode
@@ -11,12 +14,12 @@ import           Types
 
 
 -- Assignment of a truth value to a formula at a state.
-type Assignment = (State, Form, Bool)
+type Assignment = (StateId, Form, Bool)
 
 -- The model checking monad allows access to & modification of truth values of formulae in the model.
 -- Access is performed by a direct lookup in a shared state that resides on the current node.
 -- Modification implies sending the new update to all nodes, including the current one.
-type Store = IORefHashMap (State, Form) Bool
+type Store = IORefHashMap (StateId, Form) Bool
 
 data ModelCheckState = ModelCheckState {
     checkPeers ∷ [ProcessId]
@@ -27,38 +30,20 @@ type ModelCheck = StateT ModelCheckState Process
 
 
 -- Put a single assignment into the store. Returns the inserted value.
-put ∷ Assignment → ModelCheck Bool
-put a@(_, _, v) = putMany [a] >> return v
+put ∷ (State, Form, Bool) → ModelCheck Bool
+put (State{..}, ϕ, b) = put' (stateId, ϕ, b)
 
--- Or, put many.
-putMany ∷ [Assignment] → ModelCheck ()
-putMany as = do
-  broadcastMany as
-  insertMany as
+put' ∷ Assignment → ModelCheck Bool
+put' a@(_, _, v) = broadcastMany [a] >> return v
 
 -- Broadcast the new assgiments to all the peers.
 broadcastMany ∷ [Assignment] → ModelCheck ()
-broadcastMany a = withPeers $ mapM_ (`send` a)
-
--- Blockingly performs lookup in the assignment store. If the assignment we're looking for is not present,
--- we keep processing incoming assignments from other processes until it arrives.
-get ∷ State → Form → ModelCheck Bool
-get s ϕ = do
-  x ← lookup s ϕ
-  case x of
-    Just a  → return a
-    Nothing → do
-      processInput
-      get s ϕ
-
--- Processes all the incoming assignments and then attemps a lookup.
-getMaybe ∷ State → Form → ModelCheck (Maybe Bool)
-getMaybe s ϕ = do
-  processRemainingInput
-  lookup s ϕ
+broadcastMany a = do
+  withPeers $ mapM_ (`send` a)
 
 -- To process input, we first block until at least one input is available.
 -- Then we process all the remaining input in the inbox.
+processInput ∷ ModelCheck ()
 processInput = processOneInput >> processRemainingInput
 
 processOneInput ∷ ModelCheck ()
@@ -84,7 +69,10 @@ withStore f = gets checkStore >>= liftIO ∘ f
 
 -- Direct operations on the assignment store.
 lookup ∷ State → Form → ModelCheck (Maybe Bool)
-lookup s ϕ = withStore $ read (s, ϕ)
+lookup State{..} ϕ = withStore $ read (stateId, ϕ)
+
+lookupAll ∷ Model → Form → ModelCheck [(State, Bool)]
+lookupAll (Model m) ϕ = mapMaybeM (\s → lookup s ϕ >>= return ∘ fmap (s, )) m
 
 insert ∷ Assignment → ModelCheck ()
 insert (s, ϕ, v) = withStore $ write (s, ϕ) v
@@ -106,9 +94,9 @@ execModelCheck ∷ ModelCheck a → ModelCheckState → Process ModelCheckState
 execModelCheck = execStateT
 
 newModelCheckState ∷ [ProcessId] → Process ModelCheckState
-newModelCheckState ps = do
-  s ← liftIO new
-  return ModelCheckState{checkPeers = ps, checkStore = s}
+newModelCheckState peers = do
+  store ← liftIO new
+  return ModelCheckState {checkPeers = peers, checkStore = store}
 
 -- Convenience functions for waiting for the computation to finish.
 untilM ∷ Monad m ⇒ m Bool → m () → m ()
@@ -118,4 +106,4 @@ untilM p a = p >>= \p' → if p'
 
 -- Repeatedly executes the action until there are `count` entries in the state.
 untilFinished ∷ Int → ModelCheck () → ModelCheck ()
-untilFinished count a = untilM (Monad.ModelCheck.size >>= \s → return $ s < count) a
+untilFinished count a = untilM (Monad.ModelCheck.size >>= \s → return $ s >= count) a

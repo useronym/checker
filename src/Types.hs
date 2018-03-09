@@ -7,7 +7,7 @@ module Types where
 
 import           Control.Applicative.Unicode
 import           Control.Distributed.Process.Serializable
-import           Data.Binary                              (Binary)
+import           Data.Binary                              (Binary, put, get)
 import           Data.Function.Unicode
 import           Data.Hashable                            (Hashable (..))
 import           Data.List                                (intercalate)
@@ -72,9 +72,6 @@ instance Ord State where
 
 instance Hashable State where
   hashWithSalt s State{..} = hashWithSalt s stateId
-
-instance Binary State
-
 
 
 -- The model, then, is a list of such states.
