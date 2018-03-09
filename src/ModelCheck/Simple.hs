@@ -2,7 +2,7 @@
 {-# LANGUAGE TupleSections   #-}
 module ModelCheck.Simple where
 
-import           Control.Monad         (liftM2)
+import           Control.Monad         (liftM2, forM)
 import           Control.Monad.Extra   (ifM)
 import           Data.Function.Unicode
 import qualified Monad.ModelCheck      as M
@@ -20,11 +20,8 @@ check m s@State{..} ϕ = M.lookup s ϕ >>= maybe (check' >>= M.put ∘ (s, ϕ, )
       Truth          → return True
       Not ϕ          → not <$> check m s ϕ
       And ϕ ψ        → liftM2 (&&) (check m s ϕ) (check m s ψ)
-      Future ϕ       → and <$> mapM (\s' →
-                                       ifM (check m s' ϕ)
-                                         (return True)
-                                         (check m s' (Future ϕ))) stateNext
-      α@(Until ϕ ψ)  → ifM (check m s ψ)
+      Future ϕ       → or <$> forM stateSucc (\s' → check m s' ϕ)
+      α@(Until ϕ ψ)  → ifM (check m s ψ) --TODO: fix
                          (return True) $
                          liftM2 (&&) (check m s ϕ) (and <$> mapM (\s → check m s α) stateNext)
       Nom n          → return $ stateId == n
