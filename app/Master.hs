@@ -30,4 +30,4 @@ spawnMaster MasterConfig{model = m@PolyModel{..}, form = ϕ} slaves = do
 
 
 awaitResult ∷ Model → Form → Process [(State, Bool)]
-awaitResult m ϕ = newModelCheckState [] >>= stateServer ϕ >>= evalModelCheck (lookupAll m ϕ)
+awaitResult m ϕ = newModelCheckState [] >>= stateServer ϕ >>= evalIxStateT (lookupAll m ϕ)

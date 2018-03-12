@@ -13,9 +13,9 @@ import           Syntax
 import           Types
 
 
-stateServer ∷ Form → ModelCheckState → Process ModelCheckState
+stateServer ∷ Form → ModelCheckState AWrite → Process (ModelCheckState AWrite)
 stateServer ϕ = let count = length (subformulae ϕ) in
-  execModelCheck (untilFinished count processInput)
+  execIxStateT (untilFinished count processInput)
 
 initSlave ∷ (ValidatedModel, Form, [StateId]) → Process ()
 initSlave (model, ϕ, states) = do
@@ -26,7 +26,7 @@ initSlave (model, ϕ, states) = do
   sharedState ← newModelCheckState peers
   say "Received peer information, starting work."
   forM_ ss
-    (\s → spawnLocal (evalModelCheck_ (check m s ϕ) sharedState))
+    (\s → spawnLocal (evalIxStateT_ (check m s ϕ) (demote sharedState)))
   stateServer ϕ sharedState
   return ()
 

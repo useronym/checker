@@ -2,20 +2,21 @@
 {-# LANGUAGE TupleSections   #-}
 module ModelCheck.Simple where
 
-import           Control.Monad         (liftM2, forM)
+import           Control.Monad         (forM, liftM2)
 import           Control.Monad.Extra   (ifM)
 import           Data.Function.Unicode
-import qualified Monad.ModelCheck      as M
+import           Monad.ModelCheck
+import           Prelude               hiding (lookup)
 import           Semantics
 import           Syntax
 import           Types
 
 
 -- Simple top-down, inductive approach.
-check ∷ Model → State → Form → M.ModelCheck Bool
-check m s@State{..} ϕ = M.lookup s ϕ >>= maybe (check' >>= M.put ∘ (s, ϕ, )) return
+check ∷ Model → State → Form → ModelCheck ARead Bool
+check m s@State{..} ϕ = lookup s ϕ >>= maybe (check' >>= put ∘ (s, ϕ, )) return
   where
-    check' ∷ M.ModelCheck Bool
+    check' ∷ ModelCheck ARead Bool
     check' = case ϕ of
       Truth          → return True
       Not ϕ          → not <$> check m s ϕ

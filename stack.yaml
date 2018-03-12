@@ -39,7 +39,7 @@ packages:
 - .
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
-extra-deps: [distributed-process-async-0.2.4.1, time-1.6.0.1]
+extra-deps: [indexed-0.1.3, indexed-extras-0.2, time-1.6.0.1]
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
@@ -65,3 +65,4 @@ extra-deps: [distributed-process-async-0.2.4.1, time-1.6.0.1]
 # Allow a newer minor version of GHC than the snapshot specifies
 # compiler-check: newer-minor
 
+allow-newer: true

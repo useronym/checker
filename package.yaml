@@ -22,6 +22,7 @@ description:         Please see the README on Github at <https://github.com/gith
 dependencies:
 - base >= 4.7 && < 5
 - transformers
+- indexed-extras
 - extra
 - optparse-applicative
 - hashable
@@ -36,6 +37,7 @@ dependencies:
 
 default-extensions:
 - UnicodeSyntax
+- DataKinds
 
 library:
   source-dirs: src
