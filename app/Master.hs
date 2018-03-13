@@ -4,8 +4,6 @@ module Master (spawnMaster) where
 import           Config
 import           Control.Distributed.Process
 import           Control.Monad               (forM)
-import           Control.Monad.Extra         (ifM)
-import           Control.Monad.Trans.Class   (lift)
 import           Data.Function.Unicode
 import           List
 import           Monad.ModelCheck
@@ -20,7 +18,7 @@ spawnMaster MasterConfig{model = m@PolyModel{..}, form = ϕ} slaves = do
   say $ "Discovered slave nodes (" ++ show (length slaves) ++ "): " ++ show slaves
   pids ← distribute (spawnSlave m ϕ)
   self ← getSelfPid
-  mapM (`send` (self:pids)) pids
+  mapM_ (`send` (self:pids)) pids
   res ← awaitResult (build m) ϕ
   liftIO $ putStrLn $ show res
   return ()

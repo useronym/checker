@@ -27,7 +27,7 @@ initSlave (model, ϕ, states) = do
   say "Received peer information, starting work."
   forM_ ss
     (\s → spawnLocal (evalIxStateT_ (check m s ϕ) (demote sharedState)))
-  stateServer ϕ sharedState
+  _ ← stateServer ϕ sharedState
   return ()
 
 remotable ['initSlave]

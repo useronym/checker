@@ -2,7 +2,6 @@
 module Main where
 
 import           Config
-import           Control.Distributed.Process
 import           Control.Distributed.Process.Backend.SimpleLocalnet
 import           Control.Distributed.Process.Node                   (initRemoteTable)
 import           Master

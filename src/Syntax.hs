@@ -36,10 +36,11 @@ subst α@(Exists x' ϕ) x n
   | x == x'   = α -- Shadowing.
   | otherwise = Exists x' (subst ϕ x n)
 subst α x n = case α of
+  Truth     → Truth
   Not ϕ     → Not (subst ϕ x n)
   And ϕ ψ   → And (subst ϕ x n) (subst ψ x n)
   Future ϕ  → Future (subst ϕ x n)
   Past ϕ    → Past (subst ϕ x n)
   Until ϕ ψ → Until (subst ϕ x n) (subst ψ x n)
   Since ϕ ψ → Since (subst ϕ x n) (subst ψ x n)
-  ϕ         → ϕ -- Truth and Nom.
+  Nom m     → Nom m
