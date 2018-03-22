@@ -3,24 +3,28 @@ module Semantics where
 import           Data.Function.Unicode
 import           Data.List             (find)
 import           Data.Maybe            (fromJust)
+import           Tree
 import           Types
 
 
-successors ∷ State → [State]
+successors ∷ State → Tree State
 successors = reachableWith stateNext
 
-predecessors ∷ State → [State]
+predecessors ∷ State → Tree State
 predecessors = reachableWith statePrev
 
--- Uses DFS; breaks the cycles.
-reachableWith ∷ (State → [State]) → State → [State]
-reachableWith f = reverse ∘ reachableWith' f []
+reachableWith ∷ (State → [State]) → State → Tree State
+reachableWith f = reachableWith' f []
 
-reachableWith' ∷ (State → [State]) → [State] → State → [State]
-reachableWith' f collected x = foldl go collected (f x)
-  where go acc state = if state `elem` acc
-                         then acc
-                         else reachableWith' f (state:acc) state
+-- `col` keeps track of the states already collected on the path between
+-- the current node and the root of the tree. In other words, states may
+-- be duplicated in the tree, but on any given path from the root to a leaf,
+-- every state is unique. This guarantees finitness.
+reachableWith' ∷ (State → [State]) → [State] → State → Tree State
+reachableWith' f col x = Node x $ map (reachableWith' f newcol) children
+  where
+    newcol   = x : col
+    children = filter (not . (`elem` newcol)) (f x)
 
 
 -- Unsafe.

@@ -7,7 +7,7 @@ module Types where
 
 import           Control.Applicative.Unicode
 import           Control.Distributed.Process.Serializable
-import           Data.Binary                              (Binary, put, get)
+import           Data.Binary                              (Binary, get, put)
 import           Data.Function.Unicode
 import           Data.Hashable                            (Hashable (..))
 import           Data.List                                (intercalate)
@@ -15,6 +15,7 @@ import           Data.List.Unicode                        ((⧺))
 import           Data.Maybe                               (isJust)
 import           Data.Yaml
 import           GHC.Generics                             (Generic)
+import           Tree
 
 
 -- The data type of formulae.
@@ -43,21 +44,19 @@ instance Serializable Form
 
 -- A state in a hybrid Kripke structure.
 data State = State {
-    stateId   ∷ StateId -- ^ A unique identifier.
-  , stateInit ∷ Bool    -- ^ Initial?
-  , stateNext ∷ [State] -- ^ List of directly reachable states.
-  , statePrev ∷ [State] -- ^ List of direct predecessor states.
-  , stateSucc ∷ [State] -- ^ List of all reachable states. Finite.
-  , statePred ∷ [State] -- ^ List of all states this state can be reached from. Finite.
+    stateId   ∷ StateId    -- ^ A unique identifier.
+  , stateInit ∷ Bool       -- ^ Initial?
+  , stateNext ∷ [State]    -- ^ List of directly reachable states.
+  , statePrev ∷ [State]    -- ^ List of direct predecessor states.
+  , stateSucc ∷ Tree State -- ^ List of all reachable states. Finite.
+  , statePred ∷ Tree State -- ^ List of all states this state can be reached from. Finite.
   } deriving (Generic)
 
 instance Show State where
-  show State{..} = showInit ⧺ "[" ⧺ stateId ⧺ "] " ⧺ intercalate " " [showNext, showPrev, showSucc, showPred]
+  show State{..} = showInit ⧺ "[" ⧺ stateId ⧺ "] " ⧺ intercalate " " [showNext, showPrev]
     where showInit   = if stateInit then "→" else " "
           showNext   = "Next: " ⧺ showStates stateNext
           showPrev   = "Prev: " ⧺ showStates statePrev
-          showSucc   = "Succ: " ⧺ showStates stateSucc
-          showPred   = "Pred: " ⧺ showStates statePred
           showStates = enclose ∘ (intercalate ",") ∘ (map getStateId)
           enclose x  = "[" ⧺ x ⧺ "]"
 
@@ -119,3 +118,4 @@ instance Serializable a => Serializable (PolyModel a)
 
 type ParsedModel = PolyModel (Maybe StateId)
 type ValidatedModel = PolyModel StateId
+
