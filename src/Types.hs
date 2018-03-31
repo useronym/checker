@@ -50,7 +50,7 @@ data State = State {
   , statePrev ∷ [State]    -- ^ List of direct predecessor states.
   , stateSucc ∷ Tree State -- ^ List of all reachable states. Finite.
   , statePred ∷ Tree State -- ^ List of all states this state can be reached from. Finite.
-  } deriving (Generic)
+  }
 
 instance Show State where
   show State{..} = showInit ⧺ "[" ⧺ stateId ⧺ "] " ⧺ intercalate " " [showNext, showPrev]
