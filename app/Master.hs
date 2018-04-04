@@ -14,7 +14,7 @@ import           Types
 
 spawnMaster ∷ MasterConfig → [NodeId] → Process ()
 spawnMaster _ [] = error "No slave nodes appear to be running"
-spawnMaster MasterConfig{model = m@PolyModel{..}, form = ϕ} slaves = do
+spawnMaster MasterConfig{model = m@ValidatedModel{..}, form = ϕ} slaves = do
   say $ "Discovered slave nodes (" ++ show (length slaves) ++ "): " ++ show slaves
   pids ← distribute (spawnSlave m ϕ)
   self ← getSelfPid
@@ -22,7 +22,7 @@ spawnMaster MasterConfig{model = m@PolyModel{..}, form = ϕ} slaves = do
   res ← awaitResult (build m) ϕ
   liftIO $ putStrLn $ show res
   return ()
-    where distribute = let ss        = map polyId polyStates
+    where distribute = let ss        = map parsedId validatedStates
                            workloads = partitionN (length slaves) ss
                        in forM (zip workloads slaves) ∘ uncurry
 

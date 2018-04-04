@@ -84,38 +84,35 @@ instance Show Model where
 
 
 -- We also have structure which is parsed from file and later converted to the "real" thing.
-data PolyState a = PolyState {
-    polyId   ∷ a             -- ^ Identifier.
-  , polyInit ∷ Bool          -- ^ Initial?
-  , polyNext ∷ [StateId]     -- ^ List of directly reachable states.
+data ParsedState = ParsedState {
+    parsedId   ∷ StateId       -- ^ Identifier.
+  , parsedInit ∷ Bool          -- ^ Initial?
+  , parsedNext ∷ [StateId]     -- ^ List of directly reachable states.
   } deriving (Show, Generic)
 
-instance FromJSON a => FromJSON (PolyState a) where
-  parseJSON (Object o) = PolyState <$>
+instance FromJSON ParsedState where
+  parseJSON (Object o) = ParsedState <$>
       o .: "id"
     ⊛ o .:? "init" .!= False
     ⊛ o .:? "next" .!= []
 
-instance Binary a => Binary (PolyState a)
-instance Serializable a => Serializable (PolyState a)
-
-type ParsedState = PolyState (Maybe StateId)
-type ValidatedState = PolyState StateId
+instance Binary ParsedState
+instance Serializable ParsedState
 
 -- We allow specifying initial states both as a list and separately in each state.
-data PolyModel a = PolyModel {
-    polyStates ∷ [PolyState a]
-  , polyInits  ∷ [StateId]
-  } deriving (Generic)
+data ParsedModel = ParsedModel {
+    parsedStates ∷ [ParsedState]
+  , parsedInits  ∷ [StateId]
+  }
 
-instance FromJSON a => FromJSON (PolyModel a) where
-  parseJSON (Object o) = PolyModel <$>
+instance FromJSON ParsedModel where
+  parseJSON (Object o) = ParsedModel <$>
       o .: "states"
     ⊛ o .:? "initial" .!= []
 
-instance Binary a => Binary (PolyModel a)
-instance Serializable a => Serializable (PolyModel a)
+data ValidatedModel = ValidatedModel {
+    validatedStates ∷ [ParsedState]
+  } deriving (Generic)
 
-type ParsedModel = PolyModel (Maybe StateId)
-type ValidatedModel = PolyModel StateId
-
+instance Binary ValidatedModel
+instance Serializable ValidatedModel

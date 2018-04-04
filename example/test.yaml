@@ -1,3 +1,5 @@
+initial: [a, b]
+
 states:
 - id: a
   init: yes

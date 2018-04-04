@@ -18,14 +18,14 @@ parse path = readFile path >>= return ∘ fmap validate ∘ decodeEither'
 
 -- Tie it all up.
 build ∷ ValidatedModel → Model
-build PolyModel{..} =
-  let res = map (buildState res) polyStates in
+build ValidatedModel{..} =
+  let res = map (buildState res) validatedStates in
     reachability $ Model res
-  where buildState model PolyState{..} = State {
-            stateId   = polyId
-          , stateInit = polyInit
-          , stateNext = map (getStateById (Model model)) polyNext
-          , statePrev = filter (isJust ∘ find ((≡ polyId) ∘ stateId) ∘ stateNext) model
+  where buildState model ParsedState{..} = State {
+            stateId   = parsedId
+          , stateInit = parsedInit
+          , stateNext = map (getStateById (Model model)) parsedNext
+          , statePrev = filter (isJust ∘ find ((≡ parsedId) ∘ stateId) ∘ stateNext) model
           , stateSucc = error "uninitialized field"
           , statePred = error "uninitialized field"
           }
@@ -37,7 +37,6 @@ reachability (Model m) = Model $ map (\s → s{stateSucc = successors s, statePr
 -- Ensure uniqueness of state ids, that state ids referenced exists,
 -- and move initialness of a state from the global list to specific states.
 validate ∷ ParsedModel → ValidatedModel
-validate PolyModel{..} = PolyModel
-  { polyStates = map (\p@PolyState{..} → p{ polyId = fromJust polyId }) polyStates
-  , polyInits = []
+validate ParsedModel{..} = ValidatedModel
+  { validatedStates = map (\s → s { parsedInit = (parsedId s) `elem` parsedInits }) parsedStates
   }
