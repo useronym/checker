@@ -14,7 +14,7 @@ predecessors ∷ State → Tree State
 predecessors = reachableWith statePrev
 
 reachableWith ∷ (State → [State]) → State → Tree State
-reachableWith f = reachableWith' f []
+reachableWith f s = Root $ map (reachableWith' f [s]) (f s)
 
 -- `col` keeps track of the states already collected on the path between
 -- the current node and the root of the tree. In other words, states may
