@@ -13,3 +13,11 @@ instance Foldable Tree where
 
 instance Traversable Tree where
   traverse f (Node x ns) = Node <$> f x <*> (sequenceA $ map (traverse f) ns)
+
+
+untilT ∷ Monad m ⇒ (a → m Bool) → Tree a -> m Bool
+untilT pred (Node x ns) = do
+  p ← pred x
+  if p
+    then return True
+    else and <$> mapM (untilT pred) ns

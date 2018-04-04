@@ -9,6 +9,7 @@ import           Monad.ModelCheck
 import           Prelude               hiding (lookup)
 import           Semantics
 import           Syntax
+import           Tree
 import           Types
 
 
@@ -22,9 +23,9 @@ check m s@State{..} ϕ = lookup s ϕ >>= maybe (check' >>= put ∘ (s, ϕ, )) re
       Not ϕ          → not <$> check m s ϕ
       And ϕ ψ        → liftM2 (&&) (check m s ϕ) (check m s ψ)
       Future ϕ       → or <$> forM stateSucc (\s' → check m s' ϕ)
-      α@(Until ϕ ψ)  → ifM (check m s ψ) --TODO: fix
+      α@(Until ϕ ψ)  → ifM (check m s ψ)
                          (return True) $
-                         liftM2 (&&) (check m s ϕ) (and <$> mapM (\s → check m s α) stateNext)
+                         liftM2 (&&) (check m s ϕ) (untilT (\s → check m s α) stateSucc)
       Nom n          → return $ stateId == n
       Var x          → return False -- Unbound variable.
       At (Left n) ϕ  → check m (getStateById m n) ϕ
