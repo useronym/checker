@@ -19,23 +19,17 @@ parse path = readFile path >>= return ∘ fmap validate ∘ decodeEither'
 -- Tie it all up.
 build ∷ ValidatedModel → Model
 build ValidatedModel{..} =
-  let res = map (buildState res) validatedStates in
-    reachability $ Model res
-  where buildState model ParsedState{..} = State {
+  let model = map (buildState model) validatedStates in
+    Model model
+  where buildState model ParsedState{..} = let s = State {
             stateId   = parsedId
           , stateInit = parsedInit
           , stateNext = map (getStateById (Model model)) parsedNext
           , statePrev = filter (isJust ∘ find ((≡ parsedId) ∘ stateId) ∘ stateNext) model
-          , stateSucc = error "uninitialized field"
-          , statePred = error "uninitialized field"
-          }
+          , stateSucc = successors s
+          , statePred = predecessors s
+          } in s
 
-reachability ∷ Model → Model
-reachability (Model m) = Model $ map (\s → s{stateSucc = successors s, statePred = predecessors s}) m
-
--- TODO
--- Ensure uniqueness of state ids, that state ids referenced exists,
--- and move initialness of a state from the global list to specific states.
 validate ∷ ParsedModel → ValidatedModel
 validate ParsedModel{..} = ValidatedModel
   { validatedStates = map (\s → s { parsedInit = (parsedId s) `elem` parsedInits }) parsedStates
