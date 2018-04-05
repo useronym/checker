@@ -35,7 +35,33 @@ data Form where
   At     ∷ (Either StateId VarId) → Form → Form
   Bind   ∷ VarId → Form → Form
   Exists ∷ VarId → Form → Form
-    deriving (Show, Eq, Ord, Generic)
+    deriving (Eq, Ord, Generic)
+
+instance Show Form where
+  show f = let str = case f of
+                 Truth      → "⊤"
+                 Not ϕ      → "¬" ++ show ϕ
+                 And ϕ ψ    → show ϕ ++ " ∧ " ++ show ψ
+                 Future ϕ   → "F" ++ show ϕ
+                 Past ϕ     → "P" ++ show ϕ
+                 Until ϕ ψ  → show ϕ ++ " U " ++ show ψ
+                 Since ϕ ψ  → show ϕ ++ " S " ++ show ψ
+                 Nom n      → show n
+                 Var x      → [x]
+                 At x ϕ     → "@" ++ (showAtId x) ++ "." ++ show ϕ
+                 Bind x ϕ   → "↓" ++ [x] ++ "." ++ show ϕ
+                 Exists x ϕ → "∃" ++ [x] ++ "." ++ show ϕ
+      in if isDeep f then enclose str else str
+    where isDeep f = case f of
+            Truth    → False
+            Not ϕ    → isDeep ϕ
+            Future ϕ → isDeep ϕ
+            Past ϕ   → isDeep ϕ
+            Nom _    → False
+            Var _    → False
+            _        → True
+          enclose = (++")") ∘ ("("++)
+          showAtId = either show (pure ∷ VarId → String)
 
 instance Hashable Form
 instance Binary Form
