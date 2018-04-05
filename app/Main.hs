@@ -14,16 +14,17 @@ main ∷ IO ()
 main = execParser parser >>= loadConfig >>= run
 
 run ∷ Config → IO ()
-run = either runMaster runSlave
+run Config{..} = (either runMaster runSlave configSpec) configPort
 
-runMaster ∷ MasterConfig → IO ()
-runMaster c@MasterConfig{..} = do
-  backend <- initializeBackend "127.0.0.1" masterPort (__remoteTable initRemoteTable)
+runMaster ∷ MasterConfig → String → IO ()
+runMaster c@MasterConfig{..} port = do
+  backend <- initializeBackend "127.0.0.1" port (__remoteTable initRemoteTable)
   startMaster backend (spawnMaster c)
 
-runSlave ∷ SlaveConfig → IO ()
-runSlave SlaveConfig{..} = do
-  backend <- initializeBackend "127.0.0.1" slavePort (__remoteTable initRemoteTable)
+runSlave ∷ SlaveConfig → String → IO ()
+runSlave SlaveConfig port = do
+  backend <- initializeBackend "127.0.0.1" port (__remoteTable initRemoteTable)
+  putStrLn "Backend initialized, starting in slave mode."
   startSlave backend
 
 

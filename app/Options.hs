@@ -5,35 +5,31 @@ import           Options.Applicative
 
 
 data MasterOptions = MasterOptions
-  { peersPath  ∷ FilePath
-  , masterPort ∷ String
-  , modelPath  ∷ FilePath
+  { modelPath  ∷ FilePath
   , form       ∷ String
   }
 
-data SlaveOptions = SlaveOptions
-  { slavePort ∷ String
-  }
+data SlaveOptions = SlaveOptions {}
 
-type Options = Either MasterOptions SlaveOptions
+data Options = Options
+  { optionsPort ∷ String
+  , optionsSpec ∷ Either MasterOptions SlaveOptions
+  }
 
 
 optionsParser ∷ Parser Options
-optionsParser = (Left <$> masterOptionsParser) <|> (Right <$> slaveOptionsParser)
+optionsParser = Options
+  <$> strOption
+      ( long "port"
+     <> short 'p'
+     <> value "9000"
+     <> help "Port for this node to use.")
+  <*> ((Left <$> masterOptionsParser) <|> (Right <$> slaveOptionsParser))
 
 masterOptionsParser ∷ Parser MasterOptions
 masterOptionsParser =
   MasterOptions
   <$> strOption
-      ( long "peers"
-     <> help "Path to a file with a list of IP addresses, separated by newline."
-     <> value "peers")
-  <*> strOption
-      ( long "port"
-     <> short 'p'
-     <> value "9000"
-     <> help "Port to use for communication between the nodes.")
-  <*> strOption
       ( long "model"
      <> short 'm'
      <> help "Path to the model file.")
@@ -41,13 +37,7 @@ masterOptionsParser =
       ( help "Formula to check.")
 
 slaveOptionsParser ∷ Parser SlaveOptions
-slaveOptionsParser =
-  SlaveOptions
-  <$> strOption
-      ( long "port"
-     <> short 'p'
-     <> value "9000"
-     <> help "Port to use for communication between the nodes.")
+slaveOptionsParser = pure SlaveOptions
 
 
 parser ∷ ParserInfo Options

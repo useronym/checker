@@ -1,4 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TupleSections   #-}
 module Config where
 
 import           Data.Bitraversable    (bisequence)
@@ -10,33 +11,32 @@ import           Types
 
 
 data MasterConfig = MasterConfig
-  { masterPort ∷ String
-  , model      ∷ ValidatedModel
-  , form       ∷ Form
+  { model ∷ ValidatedModel
+  , form  ∷ Form
   }
 
 data SlaveConfig = SlaveConfig
-  { slavePort ∷ String
-  }
 
-type Config = Either MasterConfig SlaveConfig
+data Config = Config
+  { configPort ∷ String
+  , configSpec ∷ Either MasterConfig SlaveConfig
+  }
 
 
 loadConfig ∷ Options → IO Config
-loadConfig = bisequence ∘ either (Left ∘ loadConfigMaster) (Right ∘ loadConfigSlave)
+loadConfig Options{..} =
+  bisequence (either (Left ∘ loadConfigMaster) (Right ∘ loadConfigSlave) optionsSpec)
+    >>= return ∘ (Config optionsPort)
 
 loadConfigMaster ∷ MasterOptions → IO MasterConfig
 loadConfigMaster MasterOptions{..} = do
   m ← M.parse modelPath
   return $ MasterConfig
-    { masterPort = masterPort
-    , model = fromRight m
-    , form = fromRight $ F.parse form
+    { model = fromRight m
+    , form  = fromRight $ F.parse form
     }
   where fromRight (Left e)  = error (show e)
         fromRight (Right r) = r
 
 loadConfigSlave ∷ SlaveOptions → IO SlaveConfig
-loadConfigSlave SlaveOptions{..} = return $ SlaveConfig
-  { slavePort = slavePort
-  }
+loadConfigSlave SlaveOptions = return SlaveConfig
