@@ -5,8 +5,9 @@ import           Options.Applicative
 
 
 data MasterOptions = MasterOptions
-  { modelPath  ∷ FilePath
-  , form       ∷ String
+  { modelPath ∷ FilePath
+  , output    ∷ Maybe FilePath
+  , form      ∷ String
   }
 
 data SlaveOptions = SlaveOptions {}
@@ -33,6 +34,10 @@ masterOptionsParser =
       ( long "model"
      <> short 'm'
      <> help "Path to the model file.")
+  <*> optional (strOption
+      ( long "out"
+     <> short 'o'
+     <> help "Path to the output file. If empty, stdout is used."))
   <*> strArgument
       ( help "Formula to check.")
 

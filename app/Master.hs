@@ -10,18 +10,21 @@ import           List
 import           Monad.ModelCheck
 import           Parse.Model
 import           Slave
+import           System.IO                   (hPutStrLn, hClose)
 import           Types
 
 
 spawnMaster ∷ MasterConfig → [NodeId] → Process ()
 spawnMaster _ [] = error "No slave nodes appear to be running"
-spawnMaster MasterConfig{model = m@ValidatedModel{..}, form = ϕ} slaves = do
+spawnMaster MasterConfig{model = m@ValidatedModel{..}, output = out, form = ϕ} slaves = do
   say $ "Discovered slave nodes (" ++ show (length slaves) ++ "): " ++ show slaves
   pids ← distribute (spawnSlave m ϕ)
   self ← getSelfPid
   mapM_ (`send` (self:pids)) pids
   res ← getResult (build m) ϕ
-  liftIO $ putStrLn res
+  liftIO $ do
+    hPutStrLn out res
+    hClose out
   return ()
     where distribute = let ss        = map parsedId validatedStates
                            workloads = partitionN (length slaves) ss

@@ -7,12 +7,14 @@ import           Data.Function.Unicode
 import           Options
 import qualified Parse.Form            as F
 import qualified Parse.Model           as M
+import           System.IO             (Handle, IOMode(WriteMode), stdout, openFile)
 import           Types
 
 
 data MasterConfig = MasterConfig
-  { model ∷ ValidatedModel
-  , form  ∷ Form
+  { model  ∷ ValidatedModel
+  , output ∷ Handle
+  , form   ∷ Form
   }
 
 data SlaveConfig = SlaveConfig
@@ -31,9 +33,11 @@ loadConfig Options{..} =
 loadConfigMaster ∷ MasterOptions → IO MasterConfig
 loadConfigMaster MasterOptions{..} = do
   m ← M.parse modelPath
+  out ← maybe (pure stdout) (flip openFile WriteMode) output
   return $ MasterConfig
-    { model = fromRight m
-    , form  = fromRight $ F.parse form
+    { model  = fromRight m
+    , output = out
+    , form   = fromRight $ F.parse form
     }
   where fromRight (Left e)  = error (show e)
         fromRight (Right r) = r
