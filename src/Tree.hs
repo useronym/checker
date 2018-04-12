@@ -20,12 +20,17 @@ instance Traversable Tree where
   traverse f (Node x ns) = Node <$> f x <*> (sequenceA $ map (traverse f) ns)
 
 
+-- Tis is (𝔹, ∨, ⊥).
+instance Monoid Bool where
+  mempty = False
+  True `mappend` _  = True
+  False `mappend` x = x
+
 data Three = Yes | No | Maybe
   deriving (Show)
 
 instance Monoid Three where
   mempty = No
-
   Yes `mappend` _   = Yes
   No `mappend` _    = No
   Maybe `mappend` x = x
