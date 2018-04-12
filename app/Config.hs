@@ -7,7 +7,7 @@ import           Data.Function.Unicode
 import           Options
 import qualified Parse.Form            as F
 import qualified Parse.Model           as M
-import           System.IO             (Handle, IOMode(WriteMode), stdout, openFile)
+import           System.IO             (Handle, IOMode (WriteMode), openFile, stdout)
 import           Types
 
 
