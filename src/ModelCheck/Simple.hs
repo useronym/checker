@@ -25,7 +25,7 @@ check m s@State{..} ϕ = lookup s ϕ >>= maybe (check' >>= put ∘ (s, ϕ, )) re
       Future ϕ       → foldMap
                          (\s' → if s == s' then return False else check m s' ϕ)
                          stateSucc
-      α@(Until ϕ ψ)  → threeToBool <$> foldMap
+      (Until ϕ ψ)    → threeToBool <$> foldMap
                          (\s' → caseM
                                  [(check m s' ψ, Yes)
                                  ,(check m s' ϕ, Maybe)])
@@ -34,5 +34,5 @@ check m s@State{..} ϕ = lookup s ϕ >>= maybe (check' >>= put ∘ (s, ϕ, )) re
       Var x          → return False -- Unbound variable.
       At (Left n) ϕ  → check m (getStateById m n) ϕ
       At (Right x) ϕ → return False -- Unbound variable.
-      Bind x ϕ       → let ϕ' = subst ϕ x stateId in check m s ϕ'
-      Exists x ϕ     → or <$> mapM (\s' → let ϕ' = subst ϕ x (getStateId s') in check m s' ϕ') (unModel m)
+      Bind x ϕ       → let ϕ' = bind ϕ x stateId in check m s ϕ'
+      Exists x ϕ     → or <$> mapM (\s' → let ϕ' = bind ϕ x (getStateId s') in check m s' ϕ') (unModel m)

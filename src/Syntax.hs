@@ -20,27 +20,27 @@ subformulae x = x : case x of
   Exists _ ϕ → sub ϕ
   where sub = subformulae
 
--- Substitute in Form α, replacing occurences of VarId x with StateId n, returning the new Form.
-subst ∷ Form → VarId → StateId → Form
-subst α@(Var x') x n
+-- Perform binding in Form α, VarId x with StateId n, returning the new Form.
+bind ∷ Form → VarId → StateId → Form
+bind α@(Var x') x n
   | x == x'   = Nom n
   | otherwise = α
-subst (At (Left s) ϕ) x n = At (Left s) (subst ϕ x n)
-subst α@(At (Right x') ϕ) x n
-  | x == x'   = At (Left n) (subst ϕ x n)
-  | otherwise = At (Right x') (subst ϕ x n)
-subst α@(Bind x' ϕ) x n
-  | x == x'   = α -- Shadowing.
-  | otherwise = Bind x' (subst ϕ x n)
-subst α@(Exists x' ϕ) x n
-  | x == x'   = α -- Shadowing.
-  | otherwise = Exists x' (subst ϕ x n)
-subst α x n = case α of
+bind (At (Left s) ϕ) x n = At (Left s) (bind ϕ x n)
+bind α@(At (Right x') ϕ) x n
+  | x == x'   = At (Left n) (bind ϕ x n)
+  | otherwise = At (Right x') (bind ϕ x n)
+bind (Bind x' ϕ) x n
+  | x == x'   = bind ϕ x n
+  | otherwise = Bind x' (bind ϕ x n)
+bind (Exists x' ϕ) x n
+  | x == x'   = bind ϕ x n
+  | otherwise = Exists x' (bind ϕ x n)
+bind α x n = case α of
   Truth     → Truth
-  Not ϕ     → Not (subst ϕ x n)
-  And ϕ ψ   → And (subst ϕ x n) (subst ψ x n)
-  Future ϕ  → Future (subst ϕ x n)
-  Past ϕ    → Past (subst ϕ x n)
-  Until ϕ ψ → Until (subst ϕ x n) (subst ψ x n)
-  Since ϕ ψ → Since (subst ϕ x n) (subst ψ x n)
+  Not ϕ     → Not (bind ϕ x n)
+  And ϕ ψ   → And (bind ϕ x n) (bind ψ x n)
+  Future ϕ  → Future (bind ϕ x n)
+  Past ϕ    → Past (bind ϕ x n)
+  Until ϕ ψ → Until (bind ϕ x n) (bind ψ x n)
+  Since ϕ ψ → Since (bind ϕ x n) (bind ψ x n)
   Nom m     → Nom m
