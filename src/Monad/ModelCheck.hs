@@ -11,6 +11,7 @@ module Monad.ModelCheck (
   , Monad.ModelCheck.size
   , newModelCheckState
   , untilFinished
+  , forever
   , Access(..)
   , evalIxStateT
   , evalIxStateT_
@@ -117,3 +118,6 @@ untilM p a = p >>= \p' → if p'
 -- Repeatedly executes the action until there are `count` entries in the state.
 untilFinished ∷ Int → ModelCheck a () → ModelCheck a ()
 untilFinished count a = untilM (Monad.ModelCheck.size >>= \s → return $ s >= count) a
+
+forever ∷ ModelCheck a () → ModelCheck a ()
+forever pa = pa >> forever pa

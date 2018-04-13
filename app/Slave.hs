@@ -13,8 +13,8 @@ import           Syntax
 import           Types
 
 
-stateServer ∷ Form → ModelCheckState AWrite → Process (ModelCheckState AWrite)
-stateServer ϕ = let count = length (subformulae ϕ) in
+stateServer ∷ Int → Form → ModelCheckState AWrite → Process (ModelCheckState AWrite)
+stateServer num ϕ = let count = num * length (subformulae ϕ) in
   execIxStateT (untilFinished count processInput)
 
 initSlave ∷ (ValidatedModel, Form, [StateId]) → Process ()
@@ -27,8 +27,7 @@ initSlave (model, ϕ, states) = do
   say "Received peer information, starting work."
   forM_ ss
     (\s → spawnLocal (evalIxStateT_ (check m s ϕ) (demote sharedState)))
-  _ ← stateServer ϕ sharedState
-  return ()
+  evalIxStateT_ (forever processInput) sharedState
 
 remotable ['initSlave]
 
