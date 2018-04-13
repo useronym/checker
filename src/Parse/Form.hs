@@ -16,7 +16,7 @@ form =
   ((between (char '(') (char ')') (binderForm <|> binaryForm)) <|> unaryForm <|> constForm)
   <* spaces
 
-constForm = someOf [truth, nom, var]
+constForm = someOf [truth, var, nom]
 unaryForm = someOf [not, future, past]
 binaryForm = someOf [and, until, since]
 binderForm = someOf [at, bind, exists]
