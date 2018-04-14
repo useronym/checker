@@ -4,21 +4,23 @@ import           Data.List.Unicode ((⧺))
 import           Types
 
 
-subformulae ∷ Form → [Form]
-subformulae x = x : case x of
-  Truth      → []
-  Not ϕ      → sub ϕ
-  And ϕ ψ    → sub ϕ ⧺ sub ψ
-  Future ϕ   → sub ϕ
-  Past ϕ     → sub ϕ
-  Until ϕ ψ  → sub ϕ ⧺ sub ψ
-  Since ϕ ψ  → sub ϕ ⧺ sub ψ
-  Nom _      → []
-  Var _      → []
-  At _ ϕ     → sub ϕ
-  Bind _ ϕ   → sub ϕ
-  Exists _ ϕ → sub ϕ
-  where sub = subformulae
+-- Given the number of states in the model, how many model-checks will we need to perform?
+numEntries ∷ Int → Form → Int
+numEntries n x = case x of
+  Truth          → 0
+  Not ϕ          → 0
+  And ϕ ψ        → 0
+  Future ϕ       → 1 + num ϕ
+  Past ϕ         → 1 + num ϕ
+  Until ϕ ψ      → 1 + num ϕ + num ψ
+  Since ϕ ψ      → 1 + num ϕ + num ψ
+  Nom _          → 0
+  Var _          → 0
+  At (Left _) ϕ  → 1 + num ϕ
+  At (Right _) ϕ → n * (1 + num ϕ)
+  Bind _ ϕ       → n * (1 + num ϕ)
+  Exists _ ϕ     → n * (1 + num ϕ)
+  where num = numEntries n
 
 -- Perform binding in Form α, VarId x with StateId n, returning the new Form.
 bind ∷ Form → VarId → StateId → Form

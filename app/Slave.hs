@@ -1,9 +1,10 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Slave (spawnSlave, stateServer, __remoteTable) where
+module Slave (spawnSlave, __remoteTable) where
 
 import           Control.Distributed.Process
 import           Control.Distributed.Process.Closure
-import           Control.Monad                       (forM_)
+import           Control.Monad                       (forM)
+import           Data.List                           (delete)
 import           ModelCheck.Simple
 import           Monad.ModelCheck
 import           Parse.Model
@@ -13,21 +14,31 @@ import           Syntax
 import           Types
 
 
-stateServer ∷ Int → Form → ModelCheckState AWrite → Process (ModelCheckState AWrite)
-stateServer num ϕ = let count = num * length (subformulae ϕ) in
-  execIxStateT (untilFinished count processInput)
+worker ∷ ModelCheckState ARead → Model → [State] → Form → Process ()
+worker state m ss ϕ = do
+  evalIxStateT_ (mapM (\s → check m s ϕ) ss) state
+  getSelfPid >>= flip exit "Workload finished."
+
+monitorWorkers ∷ ModelCheckState AWrite → [MonitorRef] → Process ()
+monitorWorkers state refs = do
+  mNot   ← expectTimeout 0 ∷ Process (Maybe ProcessMonitorNotification)
+  state' ← execIxStateT (processInputTimeout 1000) state
+  let refs' = maybe refs (\(ProcessMonitorNotification ref _ DiedNormal) → delete ref refs) mNot
+  if (null refs')
+    then return ()
+    else monitorWorkers state' refs'
 
 initSlave ∷ (ValidatedModel, Form, [StateId]) → Process ()
 initSlave (model, ϕ, states) = do
-  say "Connected."
-  let m = build model
+  let m  = build model
   let ss = map (getStateById m) states
-  peers ← expect ∷ (Process [ProcessId])
+  peers       ← expect ∷ (Process [ProcessId])
   sharedState ← newModelCheckState peers
   say "Received peer information, starting work."
-  forM_ ss
-    (\s → spawnLocal (evalIxStateT_ (check m s ϕ) (demote sharedState)))
-  evalIxStateT_ (forever processInput) sharedState
+  refs ← forM ss $ \s →
+    spawnLocal (worker (demote sharedState) m [s] ϕ) >>= monitor
+  monitorWorkers sharedState refs
+  say "Workload finished."
 
 remotable ['initSlave]
 

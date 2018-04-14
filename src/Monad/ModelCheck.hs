@@ -6,6 +6,7 @@ module Monad.ModelCheck (
   , Monad.ModelCheck.demote
   , put
   , processInput
+  , processInputTimeout
   , lookup
   , lookupAll
   , Monad.ModelCheck.size
@@ -64,20 +65,20 @@ broadcastMany a = do
 -- To process input, we first block until at least one input is available.
 -- Then we process all the remaining input in the inbox.
 processInput ∷ ModelCheck AWrite ()
-processInput = processOneInput >> processRemainingInput
+processInput = processOneInput >> processInputTimeout 0
 
 processOneInput ∷ ModelCheck AWrite ()
 processOneInput = do
   a ← lift $ expect
   insertMany a
 
-processRemainingInput ∷ ModelCheck AWrite ()
-processRemainingInput = do
-  a ← lift $ expectTimeout 0
+processInputTimeout ∷ Int → ModelCheck AWrite ()
+processInputTimeout t = do
+  a ← lift $ expectTimeout t
   case a of
     Just a' → do
       insertMany a'
-      processRemainingInput
+      processInputTimeout 0
     Nothing → return ()
 
 -- Convenience wrappers.

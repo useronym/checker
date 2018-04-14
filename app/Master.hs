@@ -30,7 +30,7 @@ spawnMaster c@MasterConfig{model = m@ValidatedModel{..}, form = ϕ} slaves = do
 
 monitorResult ∷ MasterConfig → Process ()
 monitorResult MasterConfig{model = m@ValidatedModel{..}, output = out, form = ϕ} = do
-  let exp = (length validatedStates) * (length $ nub $ subformulae ϕ)
+  let exp = numEntries (length validatedStates) ϕ
   state ← newModelCheckState []
   final ← execIxStateT (writeProgress exp) state
   res   ← evalIxStateT (lookupAll (build m) ϕ) final
