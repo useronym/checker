@@ -59,8 +59,7 @@ put' a@(_, _, v) = broadcastMany [a] >> return v
 
 -- Broadcast the new assgiments to all the peers.
 broadcastMany ∷ [Assignment] → ModelCheck a ()
-broadcastMany a = do
-  withPeers $ mapM_ (`send` a)
+broadcastMany a = withPeers $ mapM_ (`send` a)
 
 -- To process input, we first block until at least one input is available.
 -- Then we process all the remaining input in the inbox.

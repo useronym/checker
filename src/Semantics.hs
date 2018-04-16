@@ -21,7 +21,7 @@ reachableWith f r = Root $ map (reachableWith' f [r]) (f r)
 -- be duplicated in the tree, but on any given path from the root to a leaf,
 -- every state is unique. This guarantees finitness.
 reachableWith' ∷ (State → [State]) → [State] → State → Tree State
-reachableWith' f col x = Node x $ (map (reachableWith' f col') nodes) ++ (map (\l → Node l []) leaves)
+reachableWith' f col x = Node x $ (map (\l → Node l []) leaves) ++ (map (reachableWith' f col') nodes)
   where
     col'            = x : col
     (nodes, leaves) = partition (not ∘ (`elem` col')) (f x)
