@@ -25,7 +25,7 @@ check m s@State{..} ϕ      = lookup s ϕ >>= maybe (check' >>= put ∘ (s, ϕ, 
   where
     check' ∷ ModelCheck ARead Bool
     check' = case ϕ of
-      Future ϕ       → foldMap (\s' → check m s' ϕ) stateSucc
+      Next ϕ         → or <$> mapM (\s' → check m s' ϕ) stateNext
       (Until ϕ ψ)    → threeToBool <$> foldMap
                          (\s' → caseM
                                  [(check m s' ψ, Yes)

@@ -33,7 +33,7 @@ data Three = Yes | No | Maybe
   deriving (Show)
 
 instance Monoid Three where
-  mempty = No
+  mempty = Maybe
   Yes `mappend` _   = Yes
   No `mappend` _    = No
   Maybe `mappend` x = x
@@ -46,6 +46,6 @@ threeToBool ∷ Three → Bool
 threeToBool Yes = True
 threeToBool _   = False
 
-caseM ∷ (Monad m, Monoid a) ⇒ [(m Bool, a)] → m a
-caseM []                 = return mempty
+caseM ∷ Monad m ⇒ [(m Bool, Three)] → m Three
+caseM []                 = return No
 caseM ((test, res):rest) = test >>= \t → if t then return res else caseM rest

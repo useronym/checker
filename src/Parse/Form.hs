@@ -17,8 +17,8 @@ form =
   <* spaces
 
 constForm = someOf [truth, var, nom]
-unaryForm = someOf [not, future, past]
-binaryForm = someOf [and, until, since]
+unaryForm = someOf [not, next, Parse.Form.future, Parse.Form.globally]
+binaryForm = someOf [and, until]
 binderForm = someOf [at, bind, exists]
 someOf = choice ∘ map try
 
@@ -28,13 +28,13 @@ not = Not <$> (notLex *> form)
 
 and = liftA2 And form (andLex *> form)
 
-future = Future <$> (futureLex *> form)
+next = Next <$> (nextLex *> form)
 
-past = Past <$> (pastLex *> form)
+future = Types.future <$> (futureLex *> form)
+
+globally = Types.globally <$> (globallyLex *> form)
 
 until = liftA2 Until form (untilLex *> form)
-
-since = liftA2 Since form (sinceLex *> form)
 
 nom = Nom <$> stateIdLex
 
@@ -48,15 +48,15 @@ bind = liftA2 Bind (bindLex *> varIdLex <* (char '.')) form
 
 exists = liftA2 Exists (existsLex *> varIdLex <* (char '.')) form
 
-stateIdLex = many1 alphaNum
-varIdLex   = lower
-truthLex   = char '⊤' <|> char 'T'
-notLex     = char '¬' <|> char '~'
-andLex     = char '∧' <|> char '&'
-futureLex  = char 'F'
-pastLex    = char 'P'
-untilLex   = char 'U'
-sinceLex   = char 'S'
-atLex      = char '@' <|> char 'T'
-bindLex    = char '↓' <|> char 'B'
-existsLex  = char '∃' <|> char 'E'
+stateIdLex  = many1 alphaNum
+varIdLex    = lower
+truthLex    = char '⊤' <|> char 'T'
+notLex      = char '¬' <|> char '~'
+andLex      = char '∧' <|> char '&'
+nextLex     = char 'X'
+futureLex   = char 'F'
+globallyLex = char 'G'
+untilLex    = char 'U'
+atLex       = char '@'
+bindLex     = char '↓' <|> char 'B'
+existsLex   = char '∃' <|> char 'E'

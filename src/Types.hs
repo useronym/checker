@@ -7,7 +7,7 @@ module Types where
 
 import           Control.Applicative.Unicode
 import           Control.Distributed.Process.Serializable
-import           Data.Binary                              (Binary, get, put)
+import           Data.Binary                              (Binary)
 import           Data.Function.Unicode
 import           Data.Hashable                            (Hashable (..))
 import           Data.List                                (intercalate)
@@ -26,10 +26,8 @@ data Form where
   Truth  ∷ Form
   Not    ∷ Form → Form
   And    ∷ Form → Form → Form
-  Future ∷ Form → Form
-  Past   ∷ Form → Form
+  Next   ∷ Form → Form
   Until  ∷ Form → Form → Form
-  Since  ∷ Form → Form → Form
   Nom    ∷ StateId → Form
   Var    ∷ VarId → Form
   At     ∷ (Either StateId VarId) → Form → Form
@@ -37,15 +35,21 @@ data Form where
   Exists ∷ VarId → Form → Form
     deriving (Eq, Ord, Generic)
 
+future ∷ Form → Form
+future ϕ = Truth `Until` ϕ
+
+globally ∷ Form → Form
+globally ϕ = Not (future (Not ϕ))
+
 instance Show Form where
   show f = let str = case f of
+                 (Truth `Until` ϕ)             → "F" ++ show ϕ
+                 (Not (Truth `Until` (Not ϕ))) → "G" ++ show ϕ
                  Truth      → "⊤"
                  Not ϕ      → "¬" ++ show ϕ
                  And ϕ ψ    → show ϕ ++ " ∧ " ++ show ψ
-                 Future ϕ   → "F" ++ show ϕ
-                 Past ϕ     → "P" ++ show ϕ
+                 Next ϕ     → "X" ++ show ϕ
                  Until ϕ ψ  → show ϕ ++ " U " ++ show ψ
-                 Since ϕ ψ  → show ϕ ++ " S " ++ show ψ
                  Nom n      → show n
                  Var x      → [x]
                  At x ϕ     → "@" ++ (showAtId x) ++ "." ++ show ϕ
@@ -53,13 +57,12 @@ instance Show Form where
                  Exists x ϕ → "∃" ++ [x] ++ "." ++ show ϕ
       in if isDeep f then enclose str else str
     where isDeep f = case f of
-            Truth    → False
-            Not ϕ    → isDeep ϕ
-            Future ϕ → isDeep ϕ
-            Past ϕ   → isDeep ϕ
-            Nom _    → False
-            Var _    → False
-            _        → True
+            Truth  → False
+            Not ϕ  → isDeep ϕ
+            Next ϕ → isDeep ϕ
+            Nom _  → False
+            Var _  → False
+            _      → True
           enclose = (++")") ∘ ("("++)
           showAtId = either show (pure ∷ VarId → String)
 
