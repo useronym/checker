@@ -17,7 +17,6 @@ numEntries n x = n + case x of
   Until ϕ ψ      → num ϕ + num ψ
   At (Right _) ϕ → n + num ϕ
   Bind _ ϕ       → n + num ϕ
-  Exists _ ϕ     → n + num ϕ
   where num = numEntries n
 
 -- Perform binding in Form α, VarId x with StateId n, returning the new Form.
@@ -32,9 +31,6 @@ bind α@(At (Right x') ϕ) x n
 bind (Bind x' ϕ) x n
   | x == x'   = bind ϕ x n
   | otherwise = Bind x' (bind ϕ x n)
-bind (Exists x' ϕ) x n
-  | x == x'   = bind ϕ x n
-  | otherwise = Exists x' (bind ϕ x n)
 bind α x n = case α of
   Truth     → Truth
   Not ϕ     → Not (bind ϕ x n)

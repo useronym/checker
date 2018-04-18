@@ -91,8 +91,8 @@ withStore f = igets checkStore >>= liftIO ∘ f
 lookup ∷ State → Form → ModelCheck a (Maybe Bool)
 lookup State{..} ϕ = withStore $ read (stateId, ϕ)
 
-lookupAll ∷ Model → Form → ModelCheck a [(State, Bool)]
-lookupAll (Model m) ϕ = mapMaybeM (\s → lookup s ϕ >>= return ∘ fmap (s, )) m
+lookupAll ∷ Run → Form → ModelCheck a [(State, Bool)]
+lookupAll (Run ss) ϕ = mapMaybeM (\s → lookup s ϕ >>= return ∘ fmap (s, )) ss
 
 insert ∷ Assignment → ModelCheck AWrite ()
 insert (s, ϕ, v) = withStore $ write (s, ϕ) v

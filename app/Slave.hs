@@ -8,14 +8,13 @@ import           Data.List                           (delete)
 import           List
 import           ModelCheck.Simple
 import           Monad.ModelCheck
-import           Parse.Model
-import           Semantics
+import           Parse.Run
 import           SyncTypes
 import           Syntax
 import           Types
 
 
-worker ∷ ModelCheckState ARead → Model → [State] → Form → Process ()
+worker ∷ ModelCheckState ARead → Run → [State] → Form → Process ()
 worker state m ss ϕ = do
   evalIxStateT_ (mapM (\s → check m s ϕ) ss) state
   getSelfPid >>= flip exit "Workload finished."
@@ -32,7 +31,7 @@ monitorWorkers state refs = do
     handleNotif (ProcessMonitorNotification ref _ DiedNormal) = delete ref refs
     handleNotif (ProcessMonitorNotification ref _ reason)     = error $ "Worker died: " ++ show reason
 
-initSlave ∷ (ProcessId, ValidatedModel, Form, [StateId]) → Process ()
+initSlave ∷ (ProcessId, ParsedRun, Form, [StateId]) → Process ()
 initSlave (master, model, ϕ, states) = do
   let m  = build model
   let ss = map (getStateById m) states
@@ -50,6 +49,6 @@ initSlave (master, model, ϕ, states) = do
 
 remotable ['initSlave]
 
-spawnSlave ∷ ProcessId → ValidatedModel → Form → [StateId] → NodeId → Process ProcessId
+spawnSlave ∷ ProcessId → ParsedRun → Form → [StateId] → NodeId → Process ProcessId
 spawnSlave master m ϕ ss node =
   spawnLink node ($(mkClosure 'initSlave) (master, m, ϕ, ss))

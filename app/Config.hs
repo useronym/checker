@@ -6,13 +6,13 @@ import           Data.Bitraversable    (bisequence)
 import           Data.Function.Unicode
 import           Options
 import qualified Parse.Form            as F
-import qualified Parse.Model           as M
+import qualified Parse.Run             as R
 import           System.IO             (Handle, IOMode (WriteMode), openFile, stdout)
 import           Types
 
 
 data MasterConfig = MasterConfig
-  { model  ∷ ValidatedModel
+  { model    ∷ [ParsedState]
   , output ∷ Handle
   , form   ∷ Form
   }
@@ -32,10 +32,10 @@ loadConfig Options{..} =
 
 loadConfigMaster ∷ MasterOptions → IO MasterConfig
 loadConfigMaster MasterOptions{..} = do
-  m ← M.parse modelPath
+  m ← R.load modelPath
   out ← maybe (pure stdout) (flip openFile WriteMode) output
   return $ MasterConfig
-    { model  = fromRight m
+    { model    = m
     , output = out
     , form   = fromRight $ F.parse form
     }

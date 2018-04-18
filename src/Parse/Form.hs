@@ -16,10 +16,10 @@ form =
   ((between (char '(') (char ')') (binderForm <|> binaryForm)) <|> unaryForm <|> constForm)
   <* spaces
 
-constForm = someOf [truth, var, nom]
+constForm = someOf [truth, var]
 unaryForm = someOf [not, next, Parse.Form.future, Parse.Form.globally]
 binaryForm = someOf [and, until]
-binderForm = someOf [at, bind, exists]
+binderForm = someOf [at, bind]
 someOf = choice ∘ map try
 
 truth = truthLex >> (return Truth)
@@ -36,19 +36,13 @@ globally = Types.globally <$> (globallyLex *> form)
 
 until = liftA2 Until form (untilLex *> form)
 
-nom = Nom <$> stateIdLex
-
 var = Var <$> varIdLex
 
-at = liftA2 At (atLex *> (st <|> vr) <* (char '.')) form
-  where st = stateIdLex >>= return ∘ Left
-        vr = varIdLex >>= return ∘ Right
+at = liftA2 At (atLex *> vr <* (char '.')) form
+  where vr = varIdLex >>= return ∘ Right
 
 bind = liftA2 Bind (bindLex *> varIdLex <* (char '.')) form
 
-exists = liftA2 Exists (existsLex *> varIdLex <* (char '.')) form
-
-stateIdLex  = many1 alphaNum
 varIdLex    = lower
 truthLex    = char '⊤' <|> char 'T'
 notLex      = char '¬' <|> char '~'
@@ -59,4 +53,3 @@ globallyLex = char 'G'
 untilLex    = char 'U'
 atLex       = char '@'
 bindLex     = char '↓' <|> char 'B'
-existsLex   = char '∃' <|> char 'E'
