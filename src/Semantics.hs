@@ -1,7 +1,8 @@
 module Semantics where
 
+import           Control.Monad         (join)
 import           Data.Function.Unicode
-import           Data.List             (partition, find)
+import           Data.List             (find, partition)
 import           Data.Maybe            (fromJust)
 import           Tree
 import           Types
@@ -14,7 +15,7 @@ predecessors ∷ State → Tree State
 predecessors = reachableWith statePrev
 
 reachableWith ∷ (State → [State]) → State → Tree State
-reachableWith f r = Root $ map (reachableWith' f [r]) (f r)
+reachableWith f = reachableWith' f []
 
 -- `col` keeps track of the states already collected on the path between
 -- the current node and the root of the tree. In other words, states may
@@ -25,6 +26,11 @@ reachableWith' f col x = Node x $ (map (\l → Node l []) leaves) ++ (map (reach
   where
     col'            = x : col
     (nodes, leaves) = partition (not ∘ (`elem` col')) (f x)
+
+
+runs ∷ Tree State → [Run]
+runs (Node x []) = [[x]]
+runs (Node x ns) = join (map runs ns) >>= return ∘ (x:)
 
 
 -- Unsafe.

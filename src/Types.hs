@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs             #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
@@ -7,6 +8,7 @@ module Types where
 
 import           Control.Applicative.Unicode
 import           Control.Distributed.Process.Serializable
+import           Control.Monad                            (liftM2)
 import           Data.Binary                              (Binary)
 import           Data.Function.Unicode
 import           Data.Hashable                            (Hashable (..))
@@ -15,6 +17,7 @@ import           Data.List.Unicode                        ((⧺))
 import           Data.Maybe                               (isJust)
 import           Data.Yaml
 import           GHC.Generics                             (Generic)
+
 import           Tree
 
 
@@ -71,23 +74,19 @@ instance Binary Form
 instance Serializable Form
 
 
+type Run = [State]
+
 -- A state in a hybrid Kripke structure.
 data State = State {
     stateId   ∷ StateId    -- ^ A unique identifier.
   , stateInit ∷ Bool       -- ^ Initial?
   , stateNext ∷ [State]    -- ^ List of directly reachable states.
   , statePrev ∷ [State]    -- ^ List of direct predecessor states.
-  , stateSucc ∷ Tree State -- ^ List of all reachable states. Finite.
-  , statePred ∷ Tree State -- ^ List of all states this state can be reached from. Finite.
+  , stateRuns ∷ [Run]      -- ^ List of finite prefixes of all runs from this state.
   }
 
 instance Show State where
-  show State{..} = showInit ⧺ "[" ⧺ stateId ⧺ "] " ⧺ intercalate " " [showNext, showPrev]
-    where showInit   = if stateInit then "→" else " "
-          showNext   = "Next: " ⧺ showStates stateNext
-          showPrev   = "Prev: " ⧺ showStates statePrev
-          showStates = enclose ∘ (intercalate ",") ∘ (map getStateId)
-          enclose x  = "[" ⧺ x ⧺ "]"
+  show State{..} = stateId
 
 -- Eh.
 getStateId = stateId
@@ -145,3 +144,26 @@ data ValidatedModel = ValidatedModel {
 
 instance Binary ValidatedModel
 instance Serializable ValidatedModel
+
+
+data Three = Yes | No | Maybe
+  deriving (Show)
+
+-- This is a non-commutative monoid.
+instance Monoid Three where
+  mempty = Maybe
+  Yes `mappend` _   = Yes
+  No `mappend` _    = No
+  Maybe `mappend` x = x
+
+threeToBool ∷ Three → Bool
+threeToBool Yes = True
+threeToBool _   = False
+
+caseM ∷ Monad m ⇒ [(m Bool, Three)] → m Three
+caseM []                 = return No
+caseM ((test, res):rest) = test >>= \t → if t then return res else caseM rest
+
+instance (Monad m, Monoid a) ⇒ Monoid (m a) where
+  mempty  = return mempty
+  mappend = liftM2 mappend

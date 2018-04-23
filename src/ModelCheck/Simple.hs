@@ -25,12 +25,19 @@ check m s@State{..} ϕ      = lookup s ϕ >>= maybe (check' >>= put ∘ (s, ϕ, 
   where
     check' ∷ ModelCheck ARead Bool
     check' = case ϕ of
-      Next ϕ         → or <$> mapM (\s' → check m s' ϕ) stateNext
-      (Until ϕ ψ)    → threeToBool <$> foldMap
-                         (\s' → caseM
-                                 [(check m s' ψ, Yes)
-                                 ,(check m s' ϕ, Maybe)])
-                         stateSucc
-      At (Left n) ϕ  → check m (getStateById m n) ϕ
-      Bind x ϕ       → let ϕ' = bind ϕ x stateId in check m s ϕ'
-      Exists x ϕ     → or <$> mapM (\s' → let ϕ' = bind ϕ x (getStateId s') in check m s' ϕ') (unModel m)
+      Next ϕ        → and <$> mapM (checkNext m ϕ) stateRuns
+      (Until ϕ ψ)   → and <$> mapM (checkUntil m ϕ ψ) stateRuns
+      At (Left n) ϕ → check m (getStateById m n) ϕ
+      Bind x ϕ      → let ϕ' = bind ϕ x stateId in check m s ϕ'
+
+checkNext ∷ Model → Form → Run → ModelCheck ARead Bool
+checkNext m ϕ (_:s:_) = check m s ϕ
+checkNext m ϕ _       = return False
+
+checkUntil ∷ Model → Form → Form → Run → ModelCheck ARead Bool
+checkUntil m ϕ ψ ss = fmap threeToBool $
+  flip foldMap ss $ \s →
+                      caseM
+                        [(check m s ϕ, Maybe)
+                        ,(check m s ψ, Yes)
+                        ,(return True, No)]

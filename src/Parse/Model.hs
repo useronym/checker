@@ -26,8 +26,7 @@ build ValidatedModel{..} =
           , stateInit = parsedInit
           , stateNext = map (getStateById (Model model)) parsedNext
           , statePrev = filter (isJust ∘ find ((≡ parsedId) ∘ stateId) ∘ stateNext) model
-          , stateSucc = successors s
-          , statePred = predecessors s
+          , stateRuns = runs (successors s)
           } in s
 
 validate ∷ ParsedModel → ValidatedModel
