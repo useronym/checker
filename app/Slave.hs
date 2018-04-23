@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Slave (spawnSlave, __remoteTable) where
+module Slave (spawnSlave, __remoteTable, initSlave__tdict) where
 
 import           Control.Distributed.Process
 import           Control.Distributed.Process.Closure
@@ -11,7 +11,6 @@ import           Monad.ModelCheck
 import           Parse.Model
 import           Semantics
 import           SyncTypes
-import           Syntax
 import           Types
 
 
@@ -30,7 +29,7 @@ monitorWorkers state refs = do
     else monitorWorkers state' refs'
   where
     handleNotif (ProcessMonitorNotification ref _ DiedNormal) = delete ref refs
-    handleNotif (ProcessMonitorNotification ref _ reason)     = error $ "Worker died: " ++ show reason
+    handleNotif (ProcessMonitorNotification _ _ reason)       = error $ "Worker died: " ++ show reason
 
 initSlave ∷ (ProcessId, ValidatedModel, Form, [StateId]) → Process ()
 initSlave (master, model, ϕ, states) = do

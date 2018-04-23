@@ -5,7 +5,7 @@ import           Config
 import           Control.Distributed.Process
 import           Control.Monad               (forM)
 import           Data.Function.Unicode
-import           Data.List                   (delete, intercalate, nub)
+import           Data.List                   (delete, intercalate)
 import           List
 import           Monad.ModelCheck
 import           Parse.Model
