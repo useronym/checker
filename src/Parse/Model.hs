@@ -1,12 +1,11 @@
 {-# LANGUAGE RecordWildCards #-}
 module Parse.Model (parse, build) where
 
-import           Control.Applicative   hiding ((<|>))
 import           Data.ByteString       (readFile)
 import           Data.Eq.Unicode
 import           Data.Function.Unicode
 import           Data.List             (find)
-import           Data.Maybe            (fromJust, isJust)
+import           Data.Maybe            (isJust)
 import           Data.Yaml
 import           Prelude               hiding (readFile)
 import           Semantics
@@ -22,11 +21,11 @@ build ValidatedModel{..} =
   let model = map (buildState model) validatedStates in
     Model model
   where buildState model ParsedState{..} = let s = State {
-            stateId   = parsedId
-          , stateInit = parsedInit
-          , stateNext = map (getStateById (Model model)) parsedNext
-          , statePrev = filter (isJust ∘ find ((≡ parsedId) ∘ stateId) ∘ stateNext) model
-          , stateRuns = runs (successors s)
+            stateId    = parsedId
+          , stateInit  = parsedInit
+          , stateNext  = map (getStateById (Model model)) parsedNext
+          , statePrev  = filter (isJust ∘ find ((≡ parsedId) ∘ stateId) ∘ stateNext) model
+          , stateReach = successors s
           } in s
 
 validate ∷ ParsedModel → ValidatedModel

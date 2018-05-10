@@ -26,6 +26,7 @@ dependencies:
 - extra
 - optparse-applicative
 - hashable
+- vector
 - hashmap
 - binary
 - distributed-process

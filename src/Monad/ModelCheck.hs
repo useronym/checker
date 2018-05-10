@@ -23,7 +23,6 @@ import           Control.Distributed.Process
 import           Control.Monad.Extra         (mapMaybeM)
 import           Control.Monad.Indexed.State
 import           Data.Function.Unicode
-import           Data.Maybe                  (fromJust)
 import           Monad.Types
 import           Prelude                     hiding (lookup, read)
 import           Types
@@ -93,9 +92,6 @@ lookup State{..} ϕ = withStore $ read (stateId, ϕ)
 
 lookupAll ∷ Model → Form → ModelCheck a [(State, Bool)]
 lookupAll (Model m) ϕ = mapMaybeM (\s → lookup s ϕ >>= return ∘ fmap (s, )) m
-
-insert ∷ Assignment → ModelCheck AWrite ()
-insert (s, ϕ, v) = withStore $ write (s, ϕ) v
 
 insertMany ∷ [Assignment] → ModelCheck AWrite ()
 insertMany as = withStore $ writeMany (map (\(a,b,c) → ((a,b),c)) as)

@@ -1,4 +1,4 @@
-module Tree where
+module Types.Tree where
 
 
 -- Just a general tree structure, a.k.a. Multi-way or Rose tree.

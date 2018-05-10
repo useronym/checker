@@ -19,7 +19,7 @@ form =
 constForm = someOf [truth, var, nom]
 unaryForm = someOf [not, next, Parse.Form.future, Parse.Form.globally]
 binaryForm = someOf [and, until]
-binderForm = someOf [at, bind, exists]
+binderForm = someOf [at, bind]
 someOf = choice ∘ map try
 
 truth = truthLex >> (return Truth)
@@ -40,13 +40,9 @@ nom = Nom <$> stateIdLex
 
 var = Var <$> varIdLex
 
-at = liftA2 At (atLex *> (st <|> vr) <* (char '.')) form
-  where st = stateIdLex >>= return ∘ Left
-        vr = varIdLex >>= return ∘ Right
+at = liftA2 At (atLex *> varIdLex <* (char '.')) form
 
 bind = liftA2 Bind (bindLex *> varIdLex <* (char '.')) form
-
-exists = liftA2 Exists (existsLex *> varIdLex <* (char '.')) form
 
 stateIdLex  = many1 alphaNum
 varIdLex    = lower
@@ -59,4 +55,3 @@ globallyLex = char 'G'
 untilLex    = char 'U'
 atLex       = char '@'
 bindLex     = char '↓' <|> char 'B'
-existsLex   = char '∃' <|> char 'E'

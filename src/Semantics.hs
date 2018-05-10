@@ -1,10 +1,8 @@
 module Semantics where
 
-import           Control.Monad         (join)
 import           Data.Function.Unicode
 import           Data.List             (find, partition)
 import           Data.Maybe            (fromJust)
-import           Tree
 import           Types
 
 
@@ -26,11 +24,6 @@ reachableWith' f col x = Node x $ (map (\l → Node l []) leaves) ++ (map (reach
   where
     col'            = x : col
     (nodes, leaves) = partition (not ∘ (`elem` col')) (f x)
-
-
-runs ∷ Tree State → [Run]
-runs (Node x []) = [[x]]
-runs (Node x ns) = join (map runs ns) >>= return ∘ (x:)
 
 
 -- Unsafe.
