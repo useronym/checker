@@ -12,6 +12,7 @@ import           Control.Monad                            (liftM2)
 import           Data.Binary                              (Binary)
 import           Data.Function.Unicode
 import           Data.Hashable                            (Hashable (..))
+import           Data.List                                (intercalate)
 import           Data.Yaml
 import           GHC.Generics                             (Generic)
 import           Types.Tree
@@ -141,6 +142,17 @@ data ValidatedModel = ValidatedModel {
 
 instance Binary ValidatedModel
 instance Serializable ValidatedModel
+
+
+data SerRun = SerRun [StateId]
+  deriving (Eq, Ord, Generic)
+
+instance Show SerRun where
+  show (SerRun xs) = intercalate " " xs
+
+instance Hashable SerRun
+instance Binary SerRun
+instance Serializable SerRun
 
 
 data Three = Yes | No | Maybe

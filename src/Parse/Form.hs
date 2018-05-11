@@ -16,7 +16,7 @@ form =
   ((between (char '(') (char ')') (binderForm <|> binaryForm)) <|> unaryForm <|> constForm)
   <* spaces
 
-constForm = someOf [truth, var, nom]
+constForm = someOf [truth, var, nom, data']
 unaryForm = someOf [not, next, Parse.Form.future, Parse.Form.globally]
 binaryForm = someOf [and, until]
 binderForm = someOf [at, bind]
@@ -38,6 +38,8 @@ until = liftA2 Until form (untilLex *> form)
 
 nom = Nom <$> stateIdLex
 
+data' = Data <$> (dataLex *> varIdLex)
+
 var = Var <$> varIdLex
 
 at = liftA2 At (atLex *> varIdLex <* (char '.')) form
@@ -46,8 +48,9 @@ bind = liftA2 Bind (bindLex *> varIdLex <* (char '.')) form
 
 stateIdLex  = many1 alphaNum
 varIdLex    = lower
+dataLex     = char '~'
 truthLex    = char '⊤' <|> char 'T'
-notLex      = char '¬' <|> char '~'
+notLex      = char '¬' <|> char '-'
 andLex      = char '∧' <|> char '&'
 nextLex     = char 'X'
 futureLex   = char 'F'

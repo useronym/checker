@@ -5,8 +5,8 @@ import           Control.Arrow         (first)
 import           Control.Monad         (join)
 import           Data.Function.Unicode
 import           Data.Maybe            (mapMaybe)
-import qualified Data.Vector           as V (Vector, fromList, length, (!),
-                                             (++))
+import qualified Data.Vector           as V (Vector, fromList, length, toList,
+                                             (!), (++))
 import           Types.Base
 import           Types.Tree
 
@@ -20,6 +20,9 @@ data Run = Run
 instance Show Run where
   show Run{..} = show runStates
 
+
+toSer ∷ Run → SerRun
+toSer Run{..} = SerRun $ stateId <$> V.toList runStates
 
 lengthV ∷ Run → Int
 lengthV Run{..} = V.length runStates
@@ -52,3 +55,6 @@ extend r@Run{runCont = Nothing} = [r]
 extend r@Run{runCont = Just c}  = for (makeRuns (runContPref r) c)
                                    (\r' → r' { runStates = (runStates r) V.++ (runStates r') })
   where for = flip map
+
+makeAllRuns ∷ Model → [Run]
+makeAllRuns (Model m) = concat $ map (makeRuns [] ∘ stateReach) (filter stateInit m)

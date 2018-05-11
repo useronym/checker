@@ -1,31 +1,30 @@
 {-# LANGUAGE TupleSections #-}
-module ModelCheck where
+module ModelCheck (check) where
 
 import           Data.Maybe            (fromMaybe)
-import           Control.Arrow         ((***))
-import           Data.Function.Unicode
---import           Monad.ModelCheck
+import           Control.Arrow         (second)
+import           Monad.ModelCheck
 import           Types
 
 
 type Env = [(VarId, Int)]
 
---check ∷ Model → State → Form → ModelCheck ARead Bool
---check m s ϕ = checkRuns stateRuns >>= put ∘ (s, )
+check ∷ Form → Run → ModelCheck ARead ()
+check ϕ r = putMany (checkRun ϕ 0 [] False r )
 
 checkRuns ∷ Form → Int → Env → Bool → [Run] → [(Run, Bool)]
 checkRuns ϕ i env c rs = concat $ map (checkRun ϕ i env c) rs
 
 checkRun ∷ Form → Int → Env → Bool → Run → [(Run, Bool)]
 checkRun x i env c r
-  | (lengthV r) <= i = if c then checkRuns x i env c (extend r) else [(r, False)]
+  | (lengthV r) <= i = if c then checkRuns x i env False (extend r) else [(r, False)]
   | otherwise = case x of
   Truth     → [(r, True)]
   Nom n     → [(r, stateId (r `atV` i) == n)]
   Data x    → [(r, fromMaybe False $
                  lookup x env >>= \i' → return $ stateData (r `atV` i) == stateData (r `atV` i'))]
   Var x     → [(r, fromMaybe False $ (i==) <$> lookup x env)]
-  Not ϕ     → (id *** not) <$> checkRun ϕ i env True r
+  Not ϕ     → (second not) <$> checkRun ϕ i env True r
   And ϕ ψ   →
     case unzip $ checkRun ϕ i env True r of
       (rs, ress) | and ress → checkRuns ψ i env True rs

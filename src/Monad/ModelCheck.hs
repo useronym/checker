@@ -5,13 +5,12 @@ module Monad.ModelCheck (
   , ModelCheckState
   , Monad.ModelCheck.demote
   , put
+  , putMany
   , processInput
   , processInputTimeout
-  , lookup
-  , lookupAll
-  , Monad.ModelCheck.size
+  , withMap
+  , lookupFailed
   , newModelCheckState
-  , untilFinished
   , forever
   , Access(..)
   , evalIxStateT
@@ -19,19 +18,19 @@ module Monad.ModelCheck (
   , execIxStateT
   ) where
 
+import           Control.Arrow         (first)
 import           Control.Distributed.Process
-import           Control.Monad.Extra         (mapMaybeM)
 import           Control.Monad.Indexed.State
 import           Data.Function.Unicode
+import qualified Data.HashMap                as H
 import           Monad.Types
 import           Prelude                     hiding (lookup, read)
 import           Types
 
 
--- Assignment of a truth value to a formula at a state.
-type Assignment = (StateId, Form, Bool)
+type Assignment = (SerRun,  Bool)
 
-type Store α = IORefHashMap α (StateId, Form) Bool
+type Store α = IORefHashMap α SerRun Bool
 
 -- The model checking monad allows access to & modification of truth values of formulae in the model.
 -- Access is performed by a direct lookup in a shared state that resides on the current node.
@@ -50,11 +49,11 @@ demote ModelCheckState{..} = ModelCheckState {
   }
 
 -- Put a single assignment into the store. Returns the inserted value.
-put ∷ (State, Form, Bool) → ModelCheck a Bool
-put (State{..}, ϕ, b) = put' (stateId, ϕ, b)
+put ∷ (Run, Bool) → ModelCheck a Bool
+put (r, v) = broadcastMany [(toSer r, v)] >> return v
 
-put' ∷ Assignment → ModelCheck a Bool
-put' a@(_, _, v) = broadcastMany [a] >> return v
+putMany ∷ [(Run, Bool)] → ModelCheck a ()
+putMany rs = broadcastMany (first toSer <$> rs)
 
 -- Broadcast the new assgiments to all the peers.
 broadcastMany ∷ [Assignment] → ModelCheck a ()
@@ -86,18 +85,15 @@ withPeers f = igets checkPeers >>= lift ∘ f
 withStore ∷ (Store a → IO α) → ModelCheck a α
 withStore f = igets checkStore >>= liftIO ∘ f
 
--- Direct operations on the assignment store.
-lookup ∷ State → Form → ModelCheck a (Maybe Bool)
-lookup State{..} ϕ = withStore $ read (stateId, ϕ)
+withMap ∷ (H.Map SerRun Bool → α) → ModelCheck AWrite α
+withMap f = igets checkStore >>= liftIO ∘ (f <$>) ∘ getMap
 
-lookupAll ∷ Model → Form → ModelCheck a [(State, Bool)]
-lookupAll (Model m) ϕ = mapMaybeM (\s → lookup s ϕ >>= return ∘ fmap (s, )) m
+-- Direct operations on the assignment store.
+lookupFailed ∷ ModelCheck AWrite [SerRun]
+lookupFailed = withMap $ H.keys ∘ (H.filter (==False))
 
 insertMany ∷ [Assignment] → ModelCheck AWrite ()
-insertMany as = withStore $ writeMany (map (\(a,b,c) → ((a,b),c)) as)
-
-size ∷ ModelCheck a Int
-size = withStore Monad.Types.size
+insertMany as = withStore $ writeMany as
 
 ---- Convenience functions for beginning the computation.
 newModelCheckState ∷ [ProcessId] → Process (ModelCheckState AWrite)
@@ -106,14 +102,5 @@ newModelCheckState peers = do
   return ModelCheckState {checkPeers = peers, checkStore = store}
 
 -- Convenience functions for waiting for the computation to finish.
-untilM ∷ Monad m ⇒ m Bool → m () → m ()
-untilM p a = p >>= \p' → if p'
-                           then return ()
-                           else a >> untilM p a
-
--- Repeatedly executes the action until there are `count` entries in the state.
-untilFinished ∷ Int → ModelCheck a () → ModelCheck a ()
-untilFinished count a = untilM (Monad.ModelCheck.size >>= \s → return $ s >= count) a
-
 forever ∷ ModelCheck a () → ModelCheck a ()
 forever pa = pa >> forever pa

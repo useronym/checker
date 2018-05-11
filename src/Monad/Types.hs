@@ -18,7 +18,7 @@ class SharedState (s ∷ Access → * → * → *) where
   new       ∷ IO (s AWrite k v)
   write     ∷ (Hashable k, Ord k) ⇒ k → v → s AWrite k v → IO ()
   read      ∷ (Hashable k, Ord k) ⇒ k → s a k v → IO (Maybe v)
-  size      ∷ (Hashable k, Ord k) ⇒ s a k v → IO Int
+  getMap    ∷ (Hashable k, Ord k) ⇒ s AWrite k v → IO (Map k v)
   writeMany ∷ (Hashable k, Ord k) ⇒ [(k, v)] → s AWrite k v → IO ()
   demote    ∷ s AWrite k v → s ARead k v
   writeMany kvs m = mapM_ (\(k, v) → write k v m) kvs
@@ -30,7 +30,7 @@ instance SharedState IORefHashMap where
   new                        = IORefHashMap <$> newIORef empty
   read k (IORefHashMap m)    = readIORef m >>= return ∘ lookup k
   write k v (IORefHashMap m) = modifyIORef' m (insert k v)
-  size (IORefHashMap m)      = readIORef m >>= return ∘ Data.HashMap.size
+  getMap (IORefHashMap m)    = readIORef m >>= return
   demote (IORefHashMap m)    = IORefHashMap m
 
 

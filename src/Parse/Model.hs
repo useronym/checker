@@ -31,5 +31,5 @@ build ValidatedModel{..} =
 
 validate ∷ ParsedModel → ValidatedModel
 validate ParsedModel{..} = ValidatedModel
-  { validatedStates = map (\s → s { parsedInit = (parsedId s) `elem` parsedInits }) parsedStates
+  { validatedStates = map (\s → s { parsedInit = (parsedInit s) || (parsedId s) `elem` parsedInits }) parsedStates
   }
