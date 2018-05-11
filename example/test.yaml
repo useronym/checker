@@ -3,8 +3,11 @@ initial: [a, b]
 states:
 - id: a
   init: yes
+  data: "a"
   next: [a, b, c]
 - id: b
+  data: "b"
   next: [a, c]
 - id: c
+  data: "c"
 

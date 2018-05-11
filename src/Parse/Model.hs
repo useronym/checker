@@ -23,6 +23,7 @@ build ValidatedModel{..} =
   where buildState model ParsedState{..} = let s = State {
             stateId    = parsedId
           , stateInit  = parsedInit
+          , stateData  = parsedData
           , stateNext  = map (getStateById (Model model)) parsedNext
           , statePrev  = filter (isJust ∘ find ((≡ parsedId) ∘ stateId) ∘ stateNext) model
           , stateReach = successors s

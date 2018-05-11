@@ -28,6 +28,7 @@ data Form where
   Next   ∷ Form → Form
   Until  ∷ Form → Form → Form
   Nom    ∷ StateId → Form
+  Data   ∷ VarId → Form
   Var    ∷ VarId → Form
   At     ∷ VarId → Form → Form
   Bind   ∷ VarId → Form → Form
@@ -49,6 +50,7 @@ instance Show Form where
                  Next ϕ                        → "X" ++ show ϕ
                  Until ϕ ψ                     → show ϕ ++ " U " ++ show ψ
                  Nom n                         → show n
+                 Data x                        → "~" ++ [x]
                  Var x                         → [x]
                  At x ϕ                        → "@" ++ [x] ++ "." ++ show ϕ
                  Bind x ϕ                      → "↓" ++ [x] ++ "." ++ show ϕ
@@ -58,6 +60,7 @@ instance Show Form where
             Not ϕ  → isDeep ϕ
             Next ϕ → isDeep ϕ
             Nom _  → False
+            Data _ → False
             Var _  → False
             _      → True
           enclose = (++")") ∘ ("("++)
@@ -107,6 +110,7 @@ instance Show Model where
 data ParsedState = ParsedState {
     parsedId   ∷ StateId       -- ^ Identifier.
   , parsedInit ∷ Bool          -- ^ Initial?
+  , parsedData ∷ String        -- ^ Data word assigned to this state.
   , parsedNext ∷ [StateId]     -- ^ List of directly reachable states.
   } deriving (Show, Generic)
 
@@ -114,6 +118,7 @@ instance FromJSON ParsedState where
   parseJSON (Object o) = ParsedState <$>
       o .: "id"
     ⊛ o .:? "init" .!= False
+    ⊛ o .:? "data" .!= ""
     ⊛ o .:? "next" .!= []
 
 instance Binary ParsedState

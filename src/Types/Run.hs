@@ -5,8 +5,8 @@ import           Control.Arrow         (first)
 import           Control.Monad         (join)
 import           Data.Function.Unicode
 import           Data.Maybe            (mapMaybe)
-import qualified Data.Vector           as V (Vector, fromList, last, length,
-                                             (!), (++))
+import qualified Data.Vector           as V (Vector, fromList, length, (!),
+                                             (++))
 import           Types.Base
 import           Types.Tree
 

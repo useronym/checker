@@ -18,10 +18,12 @@ checkRuns ϕ i env c rs = concat $ map (checkRun ϕ i env c) rs
 
 checkRun ∷ Form → Int → Env → Bool → Run → [(Run, Bool)]
 checkRun x i env c r
-  | (lengthV r) < i = if c then checkRuns x i env c (extend r) else [(r, False)]
+  | (lengthV r) <= i = if c then checkRuns x i env c (extend r) else [(r, False)]
   | otherwise = case x of
   Truth     → [(r, True)]
   Nom n     → [(r, stateId (r `atV` i) == n)]
+  Data x    → [(r, fromMaybe False $
+                 lookup x env >>= \i' → return $ stateData (r `atV` i) == stateData (r `atV` i'))]
   Var x     → [(r, fromMaybe False $ (i==) <$> lookup x env)]
   Not ϕ     → (id *** not) <$> checkRun ϕ i env True r
   And ϕ ψ   →
