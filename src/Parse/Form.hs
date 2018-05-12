@@ -16,11 +16,10 @@ form =
   ((between (char '(') (char ')') (binderForm <|> binaryForm)) <|> unaryForm <|> constForm)
   <* spaces
 
-constForm = someOf [truth, var, nom, data']
-unaryForm = someOf [not, next, Parse.Form.future, Parse.Form.globally]
-binaryForm = someOf [and, until]
-binderForm = someOf [at, bind]
-someOf = choice ∘ map try
+constForm = choice [truth, var, nom, data']
+unaryForm = choice [not, next, Parse.Form.future, Parse.Form.globally]
+binaryForm = choice $ map try [and, until]
+binderForm = choice [at, bind]
 
 truth = truthLex >> (return Truth)
 
