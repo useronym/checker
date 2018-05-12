@@ -18,7 +18,7 @@ form =
 
 constForm = choice [truth, var, nom, data']
 unaryForm = choice [not, next, Parse.Form.future, Parse.Form.globally]
-binaryForm = choice $ map try [and, until]
+binaryForm = choice $ map try [and, or', impl, until]
 binderForm = choice [at, bind]
 
 truth = truthLex >> (return Truth)
@@ -26,6 +26,10 @@ truth = truthLex >> (return Truth)
 not = Not <$> (notLex *> form)
 
 and = liftA2 And form (andLex *> form)
+
+or' = liftA2 boolOr form (orLex *> form)
+
+impl = liftA2 boolImplies form (implLex *> form)
 
 next = Next <$> (nextLex *> form)
 
@@ -51,6 +55,8 @@ dataLex     = char '~'
 truthLex    = char '⊤' <|> char 'T'
 notLex      = char '¬' <|> char '-'
 andLex      = char '∧' <|> char '&'
+orLex       = char '∨' <|> char '|'
+implLex     = char '→' <|> char '>'
 nextLex     = char 'X'
 futureLex   = char 'F'
 globallyLex = char 'G'

@@ -35,6 +35,12 @@ data Form where
   Bind   ∷ VarId → Form → Form
     deriving (Eq, Ord, Generic)
 
+boolOr ∷ Form → Form → Form
+boolOr ϕ ψ = Not ((Not ϕ) `And` (Not ψ))
+
+boolImplies ∷ Form → Form → Form
+boolImplies ϕ ψ = Not (ϕ `And` (Not ψ))
+
 future ∷ Form → Form
 future ϕ = Truth `Until` ϕ
 
