@@ -16,7 +16,7 @@ form =
   ((between (char '(') (char ')') (binderForm <|> binaryForm)) <|> unaryForm <|> constForm)
   <* spaces
 
-constForm = choice [truth, var, nom, data']
+constForm = choice [truth, var, prop, nom, data']
 unaryForm = choice [not, next, Parse.Form.future, Parse.Form.globally]
 binaryForm = choice $ map try [and, or', impl, until]
 binderForm = choice [at, bind]
@@ -39,7 +39,9 @@ globally = Types.globally <$> (globallyLex *> form)
 
 until = liftA2 Until form (untilLex *> form)
 
-nom = Nom <$> stateIdLex
+prop = Prop <$> (propLex *> idLex)
+
+nom = Nom <$> idLex
 
 data' = Data <$> (dataLex *> varIdLex)
 
@@ -49,9 +51,10 @@ at = liftA2 At (atLex *> varIdLex <* (char '.')) form
 
 bind = liftA2 Bind (bindLex *> varIdLex <* (char '.')) form
 
-stateIdLex  = many1 alphaNum
+idLex       = many1 alphaNum
 varIdLex    = lower
 dataLex     = char '~'
+propLex     = char 'P'
 truthLex    = char '⊤' <|> char 'T'
 notLex      = char '¬' <|> char '-'
 andLex      = char '∧' <|> char '&'

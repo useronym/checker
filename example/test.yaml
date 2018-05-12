@@ -8,4 +8,5 @@ states:
   next: [a, c]
 - id: c
   data: "c"
+  next: [c]
 

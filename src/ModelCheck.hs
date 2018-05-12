@@ -21,6 +21,7 @@ checkRun x i env c r
   | otherwise = case x of
   Truth     → [(r, True)]
   Nom n     → [(r, stateId (r `atV` i) == n)]
+  Prop p    → [(r, p `elem` (stateProps (r `atV` i)))]
   Data x    → [(r, fromMaybe False $
                  lookup x env >>= \i' → return $ stateData (r `atV` i) == stateData (r `atV` i'))]
   Var x     → [(r, fromMaybe False $ (i==) <$> lookup x env)]

@@ -21,9 +21,11 @@ import           Types.Tree
 -- The data type of formulae.
 type VarId = Char
 type StateId = String
+type PropId = String
 
 data Form where
   Truth  ∷ Form
+  Prop   ∷ PropId → Form
   Not    ∷ Form → Form
   And    ∷ Form → Form → Form
   Next   ∷ Form → Form
@@ -52,6 +54,7 @@ instance Show Form where
                  (Truth `Until` ϕ)             → "F" ++ show ϕ
                  (Not (Truth `Until` (Not ϕ))) → "G" ++ show ϕ
                  Truth                         → "⊤"
+                 Prop p                        → p
                  Not ϕ                         → "¬" ++ show ϕ
                  And ϕ ψ                       → show ϕ ++ " ∧ " ++ show ψ
                  Next ϕ                        → "X" ++ show ϕ
@@ -81,6 +84,7 @@ instance Serializable Form
 data State = State {
     stateId    ∷ StateId    -- ^ A unique identifier.
   , stateInit  ∷ Bool       -- ^ Initial?
+  , stateProps ∷ [PropId]   -- ^ List of atomic propositions satisfied.
   , stateData  ∷ String     -- ^ Data word assigned to this state.
   , stateNext  ∷ [State]    -- ^ List of directly reachable states.
   , statePrev  ∷ [State]    -- ^ List of direct predecessor states.
@@ -115,16 +119,18 @@ instance Show Model where
 
 -- We also have structure which is parsed from file and later converted to the "real" thing.
 data ParsedState = ParsedState {
-    parsedId   ∷ StateId       -- ^ Identifier.
-  , parsedInit ∷ Bool          -- ^ Initial?
-  , parsedData ∷ String        -- ^ Data word assigned to this state.
-  , parsedNext ∷ [StateId]     -- ^ List of directly reachable states.
+    parsedId    ∷ StateId       -- ^ Identifier.
+  , parsedInit  ∷ Bool          -- ^ Initial?
+  , parsedProps ∷ [PropId]      -- ^ List of atomic propositions satisfied.
+  , parsedData  ∷ String        -- ^ Data word assigned to this state.
+  , parsedNext  ∷ [StateId]     -- ^ List of directly reachable states.
   } deriving (Show, Generic)
 
 instance FromJSON ParsedState where
   parseJSON (Object o) = ParsedState <$>
       o .: "id"
     ⊛ o .:? "init" .!= False
+    ⊛ o .:? "props" .!= []
     ⊛ o .:? "data" .!= ""
     ⊛ o .:? "next" .!= []
 
@@ -159,26 +165,3 @@ instance Show SerRun where
 instance Hashable SerRun
 instance Binary SerRun
 instance Serializable SerRun
-
-
-data Three = Yes | No | Maybe
-  deriving (Show)
-
--- This is a non-commutative monoid.
-instance Monoid Three where
-  mempty = Maybe
-  Yes `mappend` _   = Yes
-  No `mappend` _    = No
-  Maybe `mappend` x = x
-
-threeToBool ∷ Three → Bool
-threeToBool Yes = True
-threeToBool _   = False
-
-caseM ∷ Monad m ⇒ [(m Bool, Three)] → m Three
-caseM []                 = return No
-caseM ((test, res):rest) = test >>= \t → if t then return res else caseM rest
-
-instance (Monad m, Monoid a) ⇒ Monoid (m a) where
-  mempty  = return mempty
-  mappend = liftM2 mappend

@@ -6,6 +6,7 @@ import           Types
 size ∷ Form → Int
 size x = case x of
   Truth     → 0
+  Prop _    → 0
   Not ϕ     → 0 + size ϕ
   And ϕ ψ   → 0 + (max (size ϕ) (size ψ))
   Next ϕ    → 0 + size ϕ

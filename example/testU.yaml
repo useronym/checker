@@ -1,0 +1,11 @@
+states:
+- id: s1
+  init: yes
+  next: [s2]
+  props: [a]
+- id: s2
+  next: [s3]
+  props: [a,c]
+- id: s3
+  next: [s2]
+  props: [b]

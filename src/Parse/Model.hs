@@ -24,6 +24,7 @@ build ValidatedModel{..} =
             stateId    = parsedId
           , stateInit  = parsedInit
           , stateData  = parsedData
+          , stateProps = parsedProps
           , stateNext  = map (getStateById (Model model)) parsedNext
           , statePrev  = filter (isJust ∘ find ((≡ parsedId) ∘ stateId) ∘ stateNext) model
           , stateReach = successors s
